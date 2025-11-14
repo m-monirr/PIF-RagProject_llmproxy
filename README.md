@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🌟 PIF RAG Chat
 
 A Retrieval-Augmented Generation (RAG) chat application that provides instant AI-powered answers about Saudi Arabia's Public Investment Fund (PIF) annual reports. This interactive web application combines document extraction, natural language processing, and vector search to deliver accurate information with a modern, responsive UI.
@@ -240,12 +239,3 @@ The PIF RAG Chat system demonstrates excellent performance across key metrics:
 - **Multilingual Performance**: Near-equal performance in English and Arabic
 - **Resource Usage**: Optimized for efficient memory and CPU utilization
 
-## 📞 Support & Contact
-
-For questions, issues, or feature requests, please:
-
-- Open an issue on GitHub: https://github.com/m-monirr/PIF-Annual-Report_RagProject/issues
-- Contact the development team at [your-email@example.com]
-=======
-# PIF-Annual-Report_RagProject
->>>>>>> 08cdbf912a3da7bc8a325d3fbf4566b66f140fac
