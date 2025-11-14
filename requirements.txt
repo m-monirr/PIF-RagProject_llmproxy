@@ -1,0 +1,17 @@
+# Core dependencies
+nicegui>=1.3.12
+flask>=2.2.3
+pandas>=1.5.3
+qdrant-client>=1.1.7
+transformers>=4.28.1
+torch>=2.0.0
+docling>=0.8.0
+docling-core>=0.8.0
+
+# LangFuse for monitoring
+langfuse==3.2.7
+
+# Additional utilities
+regex>=2022.10.31
+uuid>=1.30
+tqdm>=4.65.0
