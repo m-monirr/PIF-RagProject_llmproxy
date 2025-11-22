@@ -1,14 +1,19 @@
 # Configuration constants for the pipeline
+import os
 
-# Ollama Embedding Configuration
-OLLAMA_BASE_URL = "http://localhost:11434"  # Default Ollama URL
+# Ollama Embedding Configuration - LOCAL SETUP
+EMBEDDING_PROVIDER = "ollama"  # Using local Ollama
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")  # Local Ollama server
 
 # Qwen3-embedding model
-EMBED_MODEL_ID = "qwen3-embedding"
-EMBED_DIMENSION = 1024  # Qwen3-embedding dimension - verify with test_embedding_dimension.py
+EMBED_MODEL_ID = "qwen3-embedding"  # Qwen3-embedding model
+EMBED_DIMENSION = 1024  # Will be verified with test script - typical for qwen3-embedding
 
-# Note: Run 'python test_embedding_dimension.py' to verify the actual dimension
-# The qwen2.5-embedding model typically outputs 1024-dimensional embeddings
+# Note: To use Local Ollama:
+# 1. Download Ollama from https://ollama.com/download
+# 2. Start Ollama: ollama serve (Windows starts automatically)
+# 3. Pull the model: ollama pull qwen3-embedding
+# 4. Run your application
 
 # Legacy settings (keep for backward compatibility during migration)
 MAX_TOKENS = 8192

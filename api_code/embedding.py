@@ -2,20 +2,25 @@ import numpy as np
 import ollama
 from typing import List, Union
 import logging
-from .config import EMBED_MODEL_ID, OLLAMA_BASE_URL
+from .config import EMBEDDING_PROVIDER, EMBED_MODEL_ID, OLLAMA_BASE_URL
 
 logger = logging.getLogger(__name__)
 
-# Initialize Ollama client
-try:
-    ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
-except Exception as e:
-    logger.error(f"Failed to initialize Ollama client: {e}")
+# Initialize Ollama client for LOCAL server
+if EMBEDDING_PROVIDER == "ollama":
+    try:
+        ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
+        logger.info(f"✅ Ollama client initialized at {OLLAMA_BASE_URL}")
+    except Exception as e:
+        logger.error(f"Failed to initialize Ollama client: {e}")
+        ollama_client = None
+else:
     ollama_client = None
+    logger.error(f"Unsupported embedding provider: {EMBEDDING_PROVIDER}")
 
 def embed(texts: Union[str, List[str]], model=None, tokenizer=None, batch_size=8) -> np.ndarray:
     """
-    Embed texts using Ollama's Qwen3-embedding model.
+    Embed texts using Ollama's local embedding model.
     
     Args:
         texts: Single text or list of texts to embed
@@ -52,7 +57,7 @@ def embed(texts: Union[str, List[str]], model=None, tokenizer=None, batch_size=8
                     embeddings.append(response['embedding'])
                 else:
                     logger.warning(f"No embedding in response for text: {text[:50]}...")
-                    # Return zero vector as fallback
+                    # Return zero vector as fallback (will be determined by actual dimension)
                     embeddings.append([0.0] * 1024)
                     
         except Exception as e:
@@ -73,7 +78,7 @@ def embed(texts: Union[str, List[str]], model=None, tokenizer=None, batch_size=8
 
 def embed_query(text: str, model=None, tokenizer=None) -> np.ndarray:
     """
-    Embed a single query using Ollama's Qwen3-embedding model.
+    Embed a single query using Ollama's local embedding model.
     
     Args:
         text: Query text to embed

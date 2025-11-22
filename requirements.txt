@@ -6,8 +6,11 @@ qdrant-client>=1.1.7
 docling>=0.8.0
 docling-core>=0.8.0
 
-# Ollama for embeddings
+# Ollama for local embeddings
 ollama>=0.1.0
+
+# Environment variables
+python-dotenv>=1.0.0
 
 # LangFuse for monitoring
 langfuse==3.2.7
@@ -16,7 +19,4 @@ langfuse==3.2.7
 regex>=2022.10.31
 uuid>=1.30
 tqdm>=4.65.0
-
-# Keep these if you need them for other purposes, otherwise remove
-# transformers>=4.28.1
-# torch>=2.0.0
+numpy>=1.24.0

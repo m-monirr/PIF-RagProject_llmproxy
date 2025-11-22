@@ -113,13 +113,43 @@ The key dependencies include:
 
 ### Step 3: Prepare the environment
 
-1. **Install and start Ollama**:
+1. **Install and Configure Ollama (Local)**:
 
+**Windows:**
 ```bash
-# Install Ollama from https://ollama.ai
-# Pull the Qwen3-embedding model
+# Download and install from https://ollama.com/download
+# Ollama service starts automatically after installation
+
+# Open Command Prompt or PowerShell and pull the model:
 ollama pull qwen3-embedding
 ```
+
+**Mac/Linux:**
+```bash
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Start Ollama service (in a separate terminal)
+ollama serve
+
+# Pull the qwen3-embedding model
+ollama pull qwen3-embedding
+```
+
+**Verify Ollama is running:**
+```bash
+# Check Ollama status
+curl http://localhost:11434/api/version
+
+# Should return: {"version":"..."}
+```
+
+**List available models:**
+```bash
+ollama list
+```
+
+**Note:** Ensure the Ollama service is running in the background before starting the application. The service should automatically start on login, but you can manually start it using `ollama serve` if needed.
 
 2. Start a local Qdrant server using Docker:
 

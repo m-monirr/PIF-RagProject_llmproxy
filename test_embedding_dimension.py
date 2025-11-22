@@ -1,31 +1,47 @@
 import ollama
 import numpy as np
+import os
 
 def test_qwen_embedding():
     """Test Qwen3-embedding model and display embedding information"""
-    print("🔍 Testing Qwen3-embedding model...\n")
+    print("🔍 Testing qwen3-embedding model (Local Ollama)...\n")
+    
+    # Get configuration
+    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     
     try:
-        # Initialize Ollama client
-        client = ollama.Client(host='http://localhost:11434')
+        # Initialize Ollama client for local server
+        print(f"🏠 Connecting to Local Ollama: {ollama_url}")
+        client = ollama.Client(host=ollama_url)
         
         # Test with a sample text
-        test_text = "This is a test to check the embedding dimension"
+        test_text = "This is a test to check the embedding dimension for qwen3-embedding"
         
         print(f"📝 Test text: '{test_text}'")
         print("\n⏳ Generating embedding...\n")
         
-        # Get embedding
-        response = client.embeddings(
-            model='qwen3-embedding',
-            prompt=test_text
-        )
+        # Get embedding with qwen3-embedding model
+        try:
+            response = client.embeddings(
+                model='qwen3-embedding',
+                prompt=test_text
+            )
+            model_used = 'qwen3-embedding'
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            print("\n💡 Model not found. Please pull it first:")
+            print("   ollama pull qwen3-embedding")
+            print("\nOR try an alternative:")
+            print("   ollama pull nomic-embed-text")
+            print("   ollama pull mxbai-embed-large")
+            return None
         
         if 'embedding' in response:
             embedding = response['embedding']
             dimension = len(embedding)
             
             print("✅ Success! Embedding generated successfully\n")
+            print(f"🤖 Model used: {model_used}")
             print(f"📊 Embedding Dimension: {dimension}")
             print(f"📏 Embedding shape: ({dimension},)")
             print(f"🔢 Data type: {type(embedding[0])}")
@@ -43,9 +59,9 @@ def test_qwen_embedding():
             
             # Test with Arabic text
             print("\n🇸🇦 Testing with Arabic text...")
-            arabic_text = "هذا اختبار للتحقق من دعم اللغة العربية"
+            arabic_text = "هذا اختبار للتحقق من دعم اللغة العربية في نموذج qwen3-embedding"
             arabic_response = client.embeddings(
-                model='qwen3-embedding',
+                model=model_used,
                 prompt=arabic_text
             )
             
@@ -53,18 +69,21 @@ def test_qwen_embedding():
                 arabic_embedding = arabic_response['embedding']
                 arabic_dimension = len(arabic_embedding)
                 print(f"✅ Arabic embedding dimension: {arabic_dimension}")
-                print(f"📊 Matches English dimension: {dimension == arabic_dimension}")
+                print(f"📊 Dimensions match: {dimension == arabic_dimension}")
             
             # Recommendation
             print("\n" + "="*60)
-            print("📝 CONFIGURATION UPDATE NEEDED:")
+            print("📝 CONFIGURATION UPDATE:")
             print("="*60)
             print(f"\nUpdate your config.py file with:")
-            print(f"\n  EMBED_MODEL_ID = 'qwen3-embedding'")
+            print(f"\n  EMBEDDING_PROVIDER = 'ollama'")
+            print(f"  EMBED_MODEL_ID = '{model_used}'")
             print(f"  EMBED_DIMENSION = {dimension}")
-            print("\n" + "="*60)
+            print(f"  OLLAMA_BASE_URL = '{ollama_url}'")
+            print("\n🏠 Using Local Ollama - No cloud API needed!")
+            print("="*60)
             
-            return dimension
+            return dimension, model_used
         else:
             print("❌ Error: No embedding in response")
             print(f"Response: {response}")
@@ -73,16 +92,24 @@ def test_qwen_embedding():
     except Exception as e:
         print(f"❌ Error: {e}")
         print("\n💡 Troubleshooting:")
-        print("1. Make sure Ollama is running: ollama serve")
-        print("2. Make sure the model is pulled: ollama pull qwen3-embedding")
-        print("3. Check Ollama status: curl http://localhost:11434/api/version")
+        print("1. Make sure Ollama is installed: https://ollama.com/download")
+        print("2. Start Ollama service:")
+        print("   Windows: Ollama starts automatically after installation")
+        print("   Mac/Linux: ollama serve")
+        print("3. Pull the qwen3-embedding model:")
+        print("   ollama pull qwen3-embedding")
+        print("4. Check Ollama is running:")
+        print("   curl http://localhost:11434/api/version")
+        print("5. List available models:")
+        print("   ollama list")
         return None
 
 if __name__ == "__main__":
-    dimension = test_qwen_embedding()
+    result = test_qwen_embedding()
     
-    if dimension:
+    if result:
+        dimension, model = result
         print(f"\n✨ Test completed successfully!")
-        print(f"🎯 Use EMBED_DIMENSION = {dimension} in your config.py")
+        print(f"🎯 Use EMBED_DIMENSION = {dimension} and EMBED_MODEL_ID = '{model}' in your config.py")
     else:
         print("\n❌ Test failed. Please check the troubleshooting steps above.")
