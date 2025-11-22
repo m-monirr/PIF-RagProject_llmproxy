@@ -10,6 +10,8 @@ from pathlib import Path
 import subprocess
 import time
 import requests
+import sys
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,26 @@ class LLMProxyManager:
         self.proxy_process = None
         self._is_running = False
         
+    def _kill_existing_processes(self):
+        """Kill any existing litellm processes"""
+        try:
+            import psutil
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    cmdline = proc.info.get('cmdline')
+                    if cmdline and any('litellm' in str(arg).lower() for arg in cmdline):
+                        logger.info(f"Killing existing litellm process (PID: {proc.pid})")
+                        proc.kill()
+                        proc.wait(timeout=3)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+        except ImportError:
+            logger.warning("psutil not installed, skipping process cleanup")
+        except Exception as e:
+            logger.warning(f"Error killing existing processes: {e}")
+        
+        time.sleep(2)
+    
     def start_proxy(self) -> bool:
         """Start LiteLLM proxy server"""
         try:
@@ -36,47 +58,85 @@ class LLMProxyManager:
             # Check if config file exists
             if not self.config_path.exists():
                 logger.error(f"Config file not found: {self.config_path}")
+                logger.error(f"Please ensure {self.config_path} exists in the project root")
                 return False
             
-            # Start proxy in background
+            # Kill any existing processes
+            self._kill_existing_processes()
+            
+            # Start proxy
             logger.info(f"🚀 Starting LLM proxy on port {self.port}...")
+            logger.info(f"📋 Using config: {self.config_path.absolute()}")
+            logger.info(f"🌐 Connecting to Ollama Cloud (https://cloud.ollama.ai)")
             
-            # Kill any existing litellm processes
-            try:
-                subprocess.run(["pkill", "-f", "litellm"], check=False, capture_output=True)
-            except:
-                pass
+            # Use 'litellm' directly instead of 'python -m litellm'
+            cmd = [
+                "litellm",
+                "--port", str(self.port),
+                "--config", str(self.config_path.absolute())
+            ]
             
-            time.sleep(2)
+            logger.info(f"Running command: {' '.join(cmd)}")
             
-            # Start new proxy
+            # Start process
             self.proxy_process = subprocess.Popen(
-                ["litellm", "--port", str(self.port), "--config", str(self.config_path)],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                bufsize=1
             )
             
             # Wait for proxy to be ready
-            max_retries = 30
+            logger.info("⏳ Waiting for proxy to start (this may take 20-30 seconds)...")
+            max_retries = 20
             for i in range(max_retries):
-                time.sleep(1)
+                # Check if process died
+                if self.proxy_process.poll() is not None:
+                    stdout, stderr = self.proxy_process.communicate()
+                    logger.error(f"❌ Proxy process died")
+                    logger.error(f"STDOUT:\n{stdout}")
+                    logger.error(f"STDERR:\n{stderr}")
+                    return False
+                
+                time.sleep(2)
+                
                 if self._check_proxy_health():
-                    logger.info(f"✅ LLM proxy started successfully on port {self.port}")
+                    logger.info(f"✅ LLM proxy started successfully!")
+                    logger.info(f"   📍 Base URL: {self.base_url}")
+                    logger.info(f"   🤖 Model: Ollama Cloud (qwen2.5:3b)")
+                    logger.info(f"   🔄 Fallback: llama3.2:3b")
                     self._initialize_client()
                     return True
                 
-            logger.error("Failed to start LLM proxy - timeout")
+                if i % 5 == 0 and i > 0:
+                    logger.info(f"   Still waiting... ({i*2}/{max_retries*2}s)")
+                
+            logger.error("❌ Failed to start LLM proxy - timeout after 40 seconds")
+            
+            # Get error output
+            if self.proxy_process:
+                try:
+                    stdout, stderr = self.proxy_process.communicate(timeout=2)
+                    if stdout:
+                        logger.error(f"STDOUT:\n{stdout[:1000]}")
+                    if stderr:
+                        logger.error(f"STDERR:\n{stderr[:1000]}")
+                except:
+                    pass
+            
             return False
             
         except Exception as e:
-            logger.error(f"Failed to start LLM proxy: {e}")
+            logger.error(f"❌ Failed to start LLM proxy: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return False
     
     def _check_proxy_health(self) -> bool:
         """Check if proxy is healthy"""
         try:
-            response = requests.get(f"{self.base_url}/health", timeout=2)
+            response = requests.get(f"{self.base_url}/health", timeout=3)
             return response.status_code == 200
         except:
             return False
@@ -85,7 +145,7 @@ class LLMProxyManager:
         """Initialize OpenAI client for proxy"""
         try:
             self.client = openai.OpenAI(
-                api_key="dummy-key",  # LiteLLM doesn't need real key for Ollama
+                api_key="dummy-key",  # LiteLLM doesn't need real key for Ollama Cloud
                 base_url=self.base_url
             )
             self._is_running = True

@@ -6,13 +6,13 @@ import time
 
 logger = logging.getLogger(__name__)
 
-def test_qdrant_connection(host='localhost', port=6333, max_retries=5, timeout=30):
+def test_qdrant_connection(host='localhost', port=6333, max_retries=5):
     """Test Qdrant connection with retries"""
     for attempt in range(max_retries):
         try:
-            client = QdrantClient(host=host, port=port, timeout=timeout)
+            client = QdrantClient(host=host, port=port)
             # Try to get collections to verify connection
-            client.get_collections(timeout=timeout)
+            client.get_collections()
             logger.info(f"✅ Successfully connected to Qdrant at {host}:{port}")
             return client
         except Exception as e:
@@ -30,15 +30,15 @@ def test_qdrant_connection(host='localhost', port=6333, max_retries=5, timeout=3
                     "-v \"<your-path>\\qdrant_storage\":/qdrant/storage qdrant/qdrant"
                 )
 
-def create_qdrant_collection(collection_name, vector_size, host='localhost', port=6333, timeout=60):
+def create_qdrant_collection(collection_name, vector_size, host='localhost', port=6333):
     """Create or recreate a Qdrant collection with error handling"""
     try:
         # Test connection first
-        qdrant = test_qdrant_connection(host, port, timeout=timeout)
+        qdrant = test_qdrant_connection(host, port)
         
         # Check if collection exists
         try:
-            collections = qdrant.get_collections(timeout=timeout).collections
+            collections = qdrant.get_collections().collections
             existing_collection = next(
                 (c for c in collections if c.name == collection_name), 
                 None
@@ -46,7 +46,7 @@ def create_qdrant_collection(collection_name, vector_size, host='localhost', por
             
             if existing_collection:
                 logger.info(f"Collection '{collection_name}' already exists, deleting...")
-                qdrant.delete_collection(collection_name=collection_name, timeout=timeout)
+                qdrant.delete_collection(collection_name=collection_name)
                 logger.info(f"Deleted existing collection '{collection_name}'")
                 time.sleep(1)  # Give Qdrant time to clean up
         except Exception as e:
@@ -56,8 +56,7 @@ def create_qdrant_collection(collection_name, vector_size, host='localhost', por
         logger.info(f"Creating collection '{collection_name}' with vector size {vector_size}...")
         qdrant.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
-            timeout=timeout
+            vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE)
         )
         logger.info(f"✅ Successfully created collection '{collection_name}'")
         
@@ -67,11 +66,11 @@ def create_qdrant_collection(collection_name, vector_size, host='localhost', por
         logger.error(f"Failed to create Qdrant collection: {e}")
         raise
 
-def verify_collection_data(qdrant, collection_name, timeout=30):
+def verify_collection_data(qdrant, collection_name):
     """Verify data integrity in a collection"""
     try:
         # Get collection info
-        info = qdrant.get_collection(collection_name, timeout=timeout)
+        info = qdrant.get_collection(collection_name)
         
         logger.info(f"📊 Collection '{collection_name}' statistics:")
         logger.info(f"  - Total points: {info.points_count}")
@@ -83,8 +82,7 @@ def verify_collection_data(qdrant, collection_name, timeout=30):
                 collection_name=collection_name,
                 limit=5,
                 with_payload=True,
-                with_vectors=True,
-                timeout=timeout
+                with_vectors=True
             )
             
             logger.info(f"  - Sample verified: {len(sample)} points")
@@ -113,7 +111,7 @@ def verify_collection_data(qdrant, collection_name, timeout=30):
         logger.error(f"Failed to verify collection: {e}")
         return False
 
-def upload_points(qdrant, collection_name, vectors, chunks, batch_size=100, timeout=120):
+def upload_points(qdrant, collection_name, vectors, chunks, batch_size=100):
     """Upload points to Qdrant collection with batching and error handling"""
     try:
         total_points = len(vectors)
@@ -134,12 +132,11 @@ def upload_points(qdrant, collection_name, vectors, chunks, batch_size=100, time
                 for idx, (vec, chunk) in enumerate(zip(batch_vectors, batch_chunks), start=i)
             ]
             
-            # Upload with timeout
+            # Upload with wait
             qdrant.upload_points(
                 collection_name=collection_name, 
                 points=points,
-                wait=True,
-                timeout=timeout
+                wait=True
             )
             
             logger.info(f"Uploaded batch {i//batch_size + 1}: points {i+1}-{batch_end}/{total_points}")
@@ -148,7 +145,7 @@ def upload_points(qdrant, collection_name, vectors, chunks, batch_size=100, time
         
         # Verify the upload
         logger.info(f"🔍 Verifying uploaded data...")
-        if verify_collection_data(qdrant, collection_name, timeout=timeout):
+        if verify_collection_data(qdrant, collection_name):
             logger.info(f"✅ Data verification passed!")
         else:
             logger.warning(f"⚠️  Data verification found issues!")
@@ -157,15 +154,14 @@ def upload_points(qdrant, collection_name, vectors, chunks, batch_size=100, time
         logger.error(f"Failed to upload points: {e}")
         raise
 
-def search_collection(qdrant, collection_name, query_vector, limit=5, with_payload=True, timeout=30):
+def search_collection(qdrant, collection_name, query_vector, limit=5, with_payload=True):
     """Search collection with error handling"""
     try:
         return qdrant.search(
             collection_name=collection_name,
             query_vector=query_vector[0],
             limit=limit,
-            with_payload=with_payload,
-            timeout=timeout
+            with_payload=with_payload
         )
     except Exception as e:
         logger.error(f"Failed to search collection '{collection_name}': {e}")

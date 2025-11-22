@@ -1,38 +1,32 @@
 # LLM Proxy Configuration for RAG Answer Generation
+# Using Ollama Cloud (No API key needed, Free tier)
+
 router_settings:
-  enable_pre_call_checks: true
+  enable_pre_call_checks: false  # Disable to speed up startup
 
 model_list:
-  # Primary: Ollama Cloud (Free)
+  # Primary: Ollama Cloud - qwen2.5:3b (Fast and free)
   - model_name: "rag-llm"
     litellm_params:
-      model: "ollama/qwen2.5:3b"
+      model: "ollama_chat/qwen2.5:3b"
       api_base: "https://cloud.ollama.ai"
-      # No API key needed for Ollama Cloud
-      rpm: 100  # Adjust based on free tier limits
+      rpm: 60  # Free tier limit
 
-  # Fallback 1: Ollama Cloud alternative model
-  - model_name: "rag-llm-fallback1"
+  # Fallback 1: Ollama Cloud - llama3.2:3b
+  - model_name: "rag-llm-fallback"
     litellm_params:
-      model: "ollama/llama3.2:3b"
+      model: "ollama_chat/llama3.2:3b"
       api_base: "https://cloud.ollama.ai"
-      rpm: 100
-
-  # Fallback 2: Local Ollama (if available)
-  - model_name: "rag-llm-fallback2"
-    litellm_params:
-      model: "ollama/qwen2.5:3b"
-      api_base: "http://localhost:11434"
-      rpm: 200
+      rpm: 60
 
 litellm_settings:
-  num_retries: 3
+  num_retries: 2
   fallbacks: [
-    {"rag-llm": ["rag-llm-fallback1", "rag-llm-fallback2"]}
+    {"rag-llm": ["rag-llm-fallback"]}
   ]
-  request_timeout: 30
-  allowed_fails: 5  # per minute
-  cooldown_time: 60
+  request_timeout: 60
+  allowed_fails: 3
+  cooldown_time: 30
   drop_params: true
   success_callback: []
   failure_callback: []
