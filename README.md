@@ -182,7 +182,21 @@ docker run -p 6333:6333 -p 6334:6334 -v "C:\Users\Mohamed\Desktop\ai career\pif-
 docker run -d -p 6333:6333 -p 6334:6334 -v "C:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API\qdrant_storage":/qdrant/storage qdrant/qdrant
 ```
 
-3. Place PIF annual report PDFs in the project root directory with the following naming convention:
+3. **Start the LLM Proxy** (for answer generation):
+
+```bash
+# In a separate terminal window
+python start_llm_proxy.py
+```
+
+This starts the LiteLLM proxy that:
+- Uses **Ollama Cloud** (free tier) as primary LLM
+- Automatically falls back to alternative models if needed
+- Handles rate limiting and retries
+
+**Note:** Keep this terminal window open while using the application.
+
+4. Place PIF annual report PDFs in the project root directory with the following naming convention:
    - English reports: `PIF Annual Report YYYY.pdf` or `PIF-YYYY-Annual-Report-EN.pdf`
    - Arabic reports: `PIF Annual Report YYYY-ar.pdf` or `PIF-YYYY-Annual-Report-AR.pdf`
 
@@ -254,10 +268,11 @@ Press CTRL+C to quit
 - **PyTorch**: Industry-standard deep learning framework for embedding models and tensor operations
 - **Docling**: Specialized document processing library for PDF extraction with structure preservation
 
-### 🧠 Models & Algorithms
-- **Qwen3-Embedding (via Ollama)**: State-of-the-art multilingual embedding model for semantic search with superior Arabic language support
-- **Tesseract OCR**: Advanced optical character recognition engine for extracting text from images and scanned PDFs
-- **Hybrid Chunking**: Custom algorithm for document segmentation that balances semantic coherence and retrieval efficiency
+### 🤖 LLM & Answer Generation
+- **LiteLLM Proxy**: Unified interface for multiple LLM providers with automatic fallback
+- **Ollama Cloud**: Free cloud-based LLM service (primary)
+- **Qwen2.5:3b**: Fast and efficient model for answer generation
+- **Automatic Fallback**: Seamless switching between models on failures
 
 ## 👥 Contributing
 

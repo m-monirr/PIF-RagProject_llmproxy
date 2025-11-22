@@ -20,3 +20,7 @@ regex>=2022.10.31
 uuid>=1.30
 tqdm>=4.65.0
 numpy>=1.24.0
+
+# LLM Proxy for answer generation with fallback
+litellm[proxy]>=1.44.9
+openai>=1.42.0

@@ -30,3 +30,14 @@ year_to_filename_en = {
     "2022": "PIF Annual Report 2022",
     "2023": "PIF-2023-Annual-Report-EN"
 }
+
+# LLM Proxy Configuration
+LLM_PROXY_PORT = 4000
+LLM_PROXY_CONFIG = "llm_proxy_config.yaml"
+LLM_MAX_TOKENS = 500
+LLM_TEMPERATURE = 0.3
+
+# Ollama Cloud Configuration (Free Tier)
+OLLAMA_CLOUD_BASE = "https://cloud.ollama.ai"
+OLLAMA_PRIMARY_MODEL = "qwen2.5:3b"  # Fast and efficient
+OLLAMA_FALLBACK_MODEL = "llama3.2:3b"  # Alternative

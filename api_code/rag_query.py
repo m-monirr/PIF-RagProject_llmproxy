@@ -1,6 +1,7 @@
 from pathlib import Path
 from api_code.config import year_to_filename_ar, year_to_filename_en
 from api_code.embedding import embed_query
+from api_code.llm_proxy import get_llm_proxy
 from qdrant_client import QdrantClient
 import re
 import json
@@ -71,56 +72,51 @@ def search_multiple_collections(question: str, is_arabic: bool, limit_per_collec
     return unique_results[:5]  # Return top 5 unique results
 
 def generate_answer_from_context(question: str, context_chunks: List[Dict], is_arabic: bool) -> str:
-    """Generate a comprehensive answer from multiple context chunks"""
+    """Generate a comprehensive answer using LLM proxy with fallback"""
     if not context_chunks:
-        return "I couldn't find specific information about that in the PIF annual reports. Could you please rephrase your question or ask about a different aspect of PIF's investments?"
+        if is_arabic:
+            return "عذراً، لم أجد معلومات محددة حول هذا السؤال في تقارير صندوق الاستثمارات العامة السنوية."
+        else:
+            return "I couldn't find specific information about that in the PIF annual reports."
     
-    # Combine and process context chunks for better readability
+    # Combine context chunks
     combined_context = "\n\n".join([chunk['text'] for chunk in context_chunks])
     
-    # Process the context to create a more natural response
-    if is_arabic:
-        # Generate a more natural Arabic response
-        intro_phrases = [
-            "بناءً على المعلومات المتاحة في تقارير صندوق الاستثمارات العامة:",
-            "وفقاً لتقارير صندوق الاستثمارات العامة السنوية:",
-            "تشير المعلومات المتاحة إلى أن:",
-        ]
-        intro = intro_phrases[0]  # Use first one for now
+    # Get LLM proxy instance
+    try:
+        llm_proxy = get_llm_proxy()
         
-        # Clean and format the context
+        # Generate answer using LLM with context
+        answer = llm_proxy.generate_answer(
+            question=question,
+            context=combined_context,
+            is_arabic=is_arabic,
+            max_tokens=500,
+            temperature=0.3
+        )
+        
+        return answer
+        
+    except Exception as e:
+        logger.error(f"Error generating answer with LLM: {e}")
+        
+        # Fallback to simple context-based answer
+        if is_arabic:
+            intro = "بناءً على المعلومات المتاحة في تقارير صندوق الاستثمارات العامة:\n\n"
+        else:
+            intro = "Based on the PIF annual reports:\n\n"
+        
         formatted_context = combined_context.replace('\n\n', '\n').strip()
         
-        # Create a structured response
         if len(formatted_context) > 800:
-            # For longer responses, create a summary structure
-            answer = f"{intro}\n\n{formatted_context[:800]}...\n\n💡 يمكنك طرح أسئلة أكثر تحديداً للحصول على معلومات أكثر تفصيلاً حول هذا الموضوع."
+            answer = f"{intro}{formatted_context[:800]}..."
         else:
-            answer = f"{intro}\n\n{formatted_context}"
-            
-    else:
-        # Generate a more natural English response
-        intro_phrases = [
-            "Based on the PIF annual reports:",
-            "According to the available information from PIF:",
-            "The PIF annual reports indicate that:",
-        ]
-        intro = intro_phrases[0]  # Use first one for now
+            answer = f"{intro}{formatted_context}"
         
-        # Clean and format the context
-        formatted_context = combined_context.replace('\n\n', '\n').strip()
-        
-        # Create a structured response
-        if len(formatted_context) > 800:
-            # For longer responses, create a summary structure
-            answer = f"{intro}\n\n{formatted_context[:800]}...\n\n💡 You can ask more specific questions to get detailed information about this topic."
-        else:
-            answer = f"{intro}\n\n{formatted_context}"
-    
-    return answer
+        return answer
 
 def get_rag_answer(question: str) -> str:
-    """Enhanced RAG function with better retrieval and answer generation"""
+    """Enhanced RAG function with LLM-powered answer generation"""
     try:
         # Detect language
         is_arabic_question = is_arabic(question)
