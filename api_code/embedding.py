@@ -58,13 +58,13 @@ def embed(texts: Union[str, List[str]], model=None, tokenizer=None, batch_size=8
                 else:
                     logger.warning(f"No embedding in response for text: {text[:50]}...")
                     # Return zero vector as fallback (will be determined by actual dimension)
-                    embeddings.append([0.0] * 1024)
+                    embeddings.append([0.0] * 4096)
                     
         except Exception as e:
             logger.error(f"Error embedding batch {i//batch_size + 1}: {e}")
             # Add zero vectors for failed embeddings
             for _ in range(len(batch)):
-                embeddings.append([0.0] * 1024)
+                embeddings.append([0.0] * 4096)
     
     # Convert to numpy array
     embeddings = np.array(embeddings, dtype=np.float32)
@@ -103,7 +103,7 @@ def embed_query(text: str, model=None, tokenizer=None) -> np.ndarray:
             vec = np.array([response['embedding']], dtype=np.float32)
         else:
             logger.warning(f"No embedding in response for query: {text[:50]}...")
-            vec = np.zeros((1, 1024), dtype=np.float32)
+            vec = np.zeros((1, 4096), dtype=np.float32)
         
         # Normalize to unit length
         norm = np.linalg.norm(vec)
@@ -115,4 +115,4 @@ def embed_query(text: str, model=None, tokenizer=None) -> np.ndarray:
     except Exception as e:
         logger.error(f"Error embedding query: {e}")
         # Return zero vector as fallback
-        return np.zeros((1, 1024), dtype=np.float32)
+        return np.zeros((1, 4096), dtype=np.float32)

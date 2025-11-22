@@ -153,8 +153,33 @@ ollama list
 
 2. Start a local Qdrant server using Docker:
 
+**Windows (Command Prompt):**
+```bash
+docker run -p 6333:6333 -p 6334:6334 -v "%cd%\qdrant_storage":/qdrant/storage qdrant/qdrant
+```
+
+**Windows (PowerShell):**
+```bash
+docker run -p 6333:6333 -p 6334:6334 -v "${PWD}\qdrant_storage":/qdrant/storage qdrant/qdrant
+```
+
+**Mac/Linux:**
 ```bash
 docker run -p 6333:6333 -p 6334:6334 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
+```
+
+**Alternative (if path has spaces):**
+```bash
+# Create a directory for Qdrant storage first
+mkdir qdrant_storage
+
+# Use absolute path (replace with your actual path)
+docker run -p 6333:6333 -p 6334:6334 -v "C:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API\qdrant_storage":/qdrant/storage qdrant/qdrant
+```
+
+**Note:** Keep this terminal window open while using the application. To run Qdrant in the background, add the `-d` flag:
+```bash
+docker run -d -p 6333:6333 -p 6334:6334 -v "C:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API\qdrant_storage":/qdrant/storage qdrant/qdrant
 ```
 
 3. Place PIF annual report PDFs in the project root directory with the following naming convention:

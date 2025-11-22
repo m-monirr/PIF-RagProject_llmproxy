@@ -3,11 +3,11 @@ import os
 
 # Ollama Embedding Configuration - LOCAL SETUP
 EMBEDDING_PROVIDER = "ollama"  # Using local Ollama
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")  # Local Ollama server
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")  # Fixed: Default Ollama port
 
 # Qwen3-embedding model
 EMBED_MODEL_ID = "qwen3-embedding"  # Qwen3-embedding model
-EMBED_DIMENSION = 1024  # Will be verified with test script - typical for qwen3-embedding
+EMBED_DIMENSION = 4096  # qwen3-embedding actual dimension (verified by test)
 
 # Note: To use Local Ollama:
 # 1. Download Ollama from https://ollama.com/download

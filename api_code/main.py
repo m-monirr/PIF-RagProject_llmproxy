@@ -1,18 +1,25 @@
 import logging
 from pathlib import Path
-from docling_core.transforms.chunker.tokenizer.simple import SimpleTokenizer
 from docling.chunking import HybridChunker
+from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
+from transformers import AutoTokenizer
 from api_code.config import MAX_TOKENS, EMBED_BATCH_SIZE, year_to_filename_ar, year_to_filename_en, EMBED_DIMENSION
 from api_code.extraction import extract_from_pdf
 from api_code.chunking import chunk_document
 from api_code.embedding import embed
-from api_code.qdrant_utils import create_qdrant_collection, upload_points
+from api_code.qdrant_utils import create_qdrant_collection, upload_points, verify_collection_data
 
 def process_report(input_pdf_path, output_dir, is_arabic):
     doc, doc_filename = extract_from_pdf(input_pdf_path, output_dir)
     
-    # Use SimpleTokenizer instead of HuggingFaceTokenizer
-    tokenizer = SimpleTokenizer(max_tokens=MAX_TOKENS)
+    # Create HuggingFace tokenizer instance first
+    try:
+        hf_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+        tokenizer = HuggingFaceTokenizer(tokenizer=hf_tokenizer, max_tokens=MAX_TOKENS)
+    except Exception as e:
+        logging.error(f"Failed to create tokenizer: {e}")
+        raise
+    
     chunker = HybridChunker(tokenizer=tokenizer, merge_peers=True)
     chunk_iter = chunker.chunk(dl_doc=doc)
     
@@ -39,7 +46,13 @@ def process_report(input_pdf_path, output_dir, is_arabic):
     collection_name = f"{doc_filename}_collection"
     qdrant = create_qdrant_collection(collection_name, EMBED_DIMENSION)
     upload_points(qdrant, collection_name, vectors, all_chunks)
-    logging.info(f"Processed and uploaded {len(all_chunks)} chunks for {input_pdf_path}")
+    
+    # Verify the data was stored correctly
+    logging.info(f"Verifying data storage for {collection_name}...")
+    if verify_collection_data(qdrant, collection_name):
+        logging.info(f"✅ Successfully processed and verified {len(all_chunks)} chunks for {input_pdf_path}")
+    else:
+        logging.warning(f"⚠️  Data verification issues for {input_pdf_path}")
 
 def main():
     logging.basicConfig(level=logging.INFO)
