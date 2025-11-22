@@ -118,7 +118,7 @@ The key dependencies include:
 ```bash
 # Install Ollama from https://ollama.ai
 # Pull the Qwen3-embedding model
-ollama pull qwen2.5:latest
+ollama pull qwen3-embedding
 ```
 
 2. Start a local Qdrant server using Docker:
