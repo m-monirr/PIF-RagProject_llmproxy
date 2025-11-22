@@ -1,15 +1,15 @@
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModel
-from api_code.config import EMBED_MODEL_ID, year_to_filename_ar, year_to_filename_en
+from api_code.config import year_to_filename_ar, year_to_filename_en
 from api_code.embedding import embed_query
 from qdrant_client import QdrantClient
 import re
 import json
 from typing import List, Dict, Optional
+import logging
 
-# Load model and tokenizer once
-_tokenizer = AutoTokenizer.from_pretrained(EMBED_MODEL_ID)
-_model = AutoModel.from_pretrained(EMBED_MODEL_ID)
+logger = logging.getLogger(__name__)
+
+# Initialize Qdrant client once
 _qdrant = QdrantClient(host='localhost', port=6333)
 
 def is_arabic(text):
@@ -26,7 +26,12 @@ def search_multiple_collections(question: str, is_arabic: bool, limit_per_collec
     else:
         collections = year_to_filename_en
     
-    query_vector = embed_query(question, _model, _tokenizer)
+    # Get query embedding using Ollama (no need to pass model/tokenizer)
+    try:
+        query_vector = embed_query(question)
+    except Exception as e:
+        logger.error(f"Error generating query embedding: {e}")
+        return []
     
     # Search in all available years
     for year, filename in collections.items():
@@ -34,7 +39,7 @@ def search_multiple_collections(question: str, is_arabic: bool, limit_per_collec
             collection_name = f"{filename}_collection"
             year_results = _qdrant.search(
                 collection_name=collection_name,
-                query_vector=query_vector[0],
+                query_vector=query_vector[0].tolist(),
                 limit=limit_per_collection,
                 with_payload=True,
                 score_threshold=0.3  # Only include relevant results
@@ -48,7 +53,7 @@ def search_multiple_collections(question: str, is_arabic: bool, limit_per_collec
                     'source': filename
                 })
         except Exception as e:
-            print(f"Error searching collection {collection_name}: {e}")
+            logger.error(f"Error searching collection {collection_name}: {e}")
             continue
     
     # Sort by relevance score and remove duplicates
@@ -135,7 +140,7 @@ def get_rag_answer(question: str) -> str:
         return answer
         
     except Exception as e:
-        print(f"Error in RAG processing: {e}")
+        logger.error(f"Error in RAG processing: {e}")
         if is_arabic(question):
             return "عذراً، حدث خطأ في معالجة سؤالك. يرجى المحاولة مرة أخرى أو طرح سؤال مختلف."
         else:

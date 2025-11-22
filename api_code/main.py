@@ -1,9 +1,8 @@
 import logging
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModel
-from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
+from docling_core.transforms.chunker.tokenizer.simple import SimpleTokenizer
 from docling.chunking import HybridChunker
-from api_code.config import EMBED_MODEL_ID, MAX_TOKENS, EMBED_BATCH_SIZE, year_to_filename_ar, year_to_filename_en
+from api_code.config import MAX_TOKENS, EMBED_BATCH_SIZE, year_to_filename_ar, year_to_filename_en, EMBED_DIMENSION
 from api_code.extraction import extract_from_pdf
 from api_code.chunking import chunk_document
 from api_code.embedding import embed
@@ -11,10 +10,9 @@ from api_code.qdrant_utils import create_qdrant_collection, upload_points
 
 def process_report(input_pdf_path, output_dir, is_arabic):
     doc, doc_filename = extract_from_pdf(input_pdf_path, output_dir)
-    tokenizer = HuggingFaceTokenizer(
-        tokenizer=AutoTokenizer.from_pretrained(EMBED_MODEL_ID),
-        max_tokens=MAX_TOKENS,
-    )
+    
+    # Use SimpleTokenizer instead of HuggingFaceTokenizer
+    tokenizer = SimpleTokenizer(max_tokens=MAX_TOKENS)
     chunker = HybridChunker(tokenizer=tokenizer, merge_peers=True)
     chunk_iter = chunker.chunk(dl_doc=doc)
     
@@ -28,16 +26,18 @@ def process_report(input_pdf_path, output_dir, is_arabic):
             "text": enriched_text,
             "chunk_id": f"{doc_filename}_chunk_{i:03}"
         })
+    
     if not all_chunks:
         logging.warning(f"No valid chunks found for {input_pdf_path}")
         return
-    embed_tokenizer = AutoTokenizer.from_pretrained(EMBED_MODEL_ID)
-    embed_model = AutoModel.from_pretrained(EMBED_MODEL_ID)
+    
+    # Use Ollama embeddings (no need to pass model/tokenizer)
     texts = [chunk["text"] for chunk in all_chunks]
-    vectors = embed(texts, embed_model, embed_tokenizer, batch_size=EMBED_BATCH_SIZE)
-    # Use Qdrant server
+    vectors = embed(texts, batch_size=EMBED_BATCH_SIZE)
+    
+    # Use Qdrant server with correct dimension
     collection_name = f"{doc_filename}_collection"
-    qdrant = create_qdrant_collection(collection_name, vectors.shape[1])
+    qdrant = create_qdrant_collection(collection_name, EMBED_DIMENSION)
     upload_points(qdrant, collection_name, vectors, all_chunks)
     logging.info(f"Processed and uploaded {len(all_chunks)} chunks for {input_pdf_path}")
 

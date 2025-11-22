@@ -1,6 +1,11 @@
 # Configuration constants for the pipeline
 
-EMBED_MODEL_ID = "BAAI/bge-m3"
+# Ollama Embedding Configuration
+OLLAMA_BASE_URL = "http://localhost:11434"  # Default Ollama URL
+EMBED_MODEL_ID = "qwen2.5:latest"  # Qwen3-embedding model
+EMBED_DIMENSION = 1024  # Qwen3-embedding dimension (adjust based on actual model)
+
+# Legacy settings (keep for backward compatibility during migration)
 MAX_TOKENS = 8192
 EMBED_BATCH_SIZE = 8
 

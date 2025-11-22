@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🌟 PIF RAG Chat
 
 A Retrieval-Augmented Generation (RAG) chat application that provides instant AI-powered answers about Saudi Arabia's Public Investment Fund (PIF) annual reports. This interactive web application combines document extraction, natural language processing, and vector search to deliver accurate information with a modern, responsive UI.
@@ -109,19 +108,26 @@ pip install -r requirements.txt
 The key dependencies include:
 - NiceGUI (>= 1.3.12): For the web interface
 - Qdrant client (>= 1.1.7): For vector database operations
-- Transformers (>= 4.28.1): For NLP models
-- PyTorch (>= 2.0.0): For deep learning operations
+- Ollama (>= 0.1.0): For embedding generation via Qwen3 model
 - Docling (>= 0.8.0): For document processing
 
 ### Step 3: Prepare the environment
 
-1. Start a local Qdrant server using Docker:
+1. **Install and start Ollama**:
+
+```bash
+# Install Ollama from https://ollama.ai
+# Pull the Qwen3-embedding model
+ollama pull qwen2.5:latest
+```
+
+2. Start a local Qdrant server using Docker:
 
 ```bash
 docker run -p 6333:6333 -p 6334:6334 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
 ```
 
-2. Place PIF annual report PDFs in the project root directory with the following naming convention:
+3. Place PIF annual report PDFs in the project root directory with the following naming convention:
    - English reports: `PIF Annual Report YYYY.pdf` or `PIF-YYYY-Annual-Report-EN.pdf`
    - Arabic reports: `PIF Annual Report YYYY-ar.pdf` or `PIF-YYYY-Annual-Report-AR.pdf`
 
@@ -194,7 +200,7 @@ Press CTRL+C to quit
 - **Docling**: Specialized document processing library for PDF extraction with structure preservation
 
 ### 🧠 Models & Algorithms
-- **BGE-M3**: State-of-the-art embedding model for text vectorization with multilingual capabilities
+- **Qwen3-Embedding (via Ollama)**: State-of-the-art multilingual embedding model for semantic search with superior Arabic language support
 - **Tesseract OCR**: Advanced optical character recognition engine for extracting text from images and scanned PDFs
 - **Hybrid Chunking**: Custom algorithm for document segmentation that balances semantic coherence and retrieval efficiency
 
@@ -246,6 +252,3 @@ For questions, issues, or feature requests, please:
 
 - Open an issue on GitHub: https://github.com/m-monirr/PIF-Annual-Report_RagProject/issues
 - Contact the development team at [your-email@example.com]
-=======
-# PIF-Annual-Report_RagProject
->>>>>>> 08cdbf912a3da7bc8a325d3fbf4566b66f140fac
