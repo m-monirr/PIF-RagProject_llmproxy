@@ -5,14 +5,14 @@ import os
 EMBEDDING_PROVIDER = "ollama"  # Using local Ollama
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")  # Fixed: Default Ollama port
 
-# Qwen3-embedding model
-EMBED_MODEL_ID = "qwen3-embedding"  # Qwen3-embedding model
-EMBED_DIMENSION = 4096  # qwen3-embedding actual dimension (verified by test)
+# Qwen3-embedding model - KEEPING THE POWERFUL MODEL
+EMBED_MODEL_ID = "qwen3-embedding"  # Powerful model (3.2GB, 4096 dims)
+EMBED_DIMENSION = 4096  # qwen3-embedding actual dimension
 
-# Note: To use Local Ollama:
+# Note: To use Local Ollama with smaller model:
 # 1. Download Ollama from https://ollama.com/download
 # 2. Start Ollama: ollama serve (Windows starts automatically)
-# 3. Pull the model: ollama pull qwen3-embedding
+# 3. Pull the smaller model: ollama pull nomic-embed-text
 # 4. Run your application
 
 # Legacy settings (keep for backward compatibility during migration)

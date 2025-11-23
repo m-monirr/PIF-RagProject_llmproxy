@@ -23,8 +23,11 @@ Before running, ensure you have:
 # Verify it's running:
 curl http://localhost:11434/api/version
 
-# Pull ONLY the embedding model:
+# Pull the powerful qwen3-embedding model (3.2GB):
 ollama pull qwen3-embedding
+
+# IMPORTANT: Close other memory-intensive programs to free up RAM
+# The model needs ~3.2GB of system memory
 ```
 
 **Mac/Linux:**
@@ -32,9 +35,15 @@ ollama pull qwen3-embedding
 # In Terminal 1:
 ollama serve
 
-# Pull ONLY the embedding model:
+# Pull the qwen3-embedding model:
 ollama pull qwen3-embedding
 ```
+
+**💡 Memory Optimization Tips:**
+- Close unnecessary browser tabs and applications
+- The model loads into RAM when first used
+- After first use, embeddings are faster
+- If you still get memory errors, restart Ollama: `ollama serve`
 
 ### 1.2 Start Qdrant (Vector Database)
 

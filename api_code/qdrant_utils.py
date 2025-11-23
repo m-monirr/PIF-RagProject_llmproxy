@@ -45,10 +45,15 @@ def create_qdrant_collection(collection_name, vector_size, host='localhost', por
             )
             
             if existing_collection:
-                logger.info(f"Collection '{collection_name}' already exists, deleting...")
-                qdrant.delete_collection(collection_name=collection_name)
-                logger.info(f"Deleted existing collection '{collection_name}'")
-                time.sleep(1)  # Give Qdrant time to clean up
+                # Check if dimension matches
+                if existing_collection.config.params.vectors.size != vector_size:
+                    logger.info(f"Collection '{collection_name}' has different dimension, deleting...")
+                    qdrant.delete_collection(collection_name=collection_name)
+                    logger.info(f"Deleted existing collection '{collection_name}'")
+                    time.sleep(1)
+                else:
+                    logger.info(f"Collection '{collection_name}' already exists with correct dimension")
+                    return qdrant
         except Exception as e:
             logger.warning(f"Error checking existing collection: {e}")
         
