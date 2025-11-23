@@ -124,7 +124,11 @@ INFO:api_code.qdrant_utils:✅ Successfully processed and verified XXX chunks
 **In Terminal 3 (after processing is complete) or Terminal 4:**
 
 ```bash
-python rag_chat_ui.py
+# New Streamlit-based UI
+streamlit run app.py --server.port=8080
+
+# Or use the launcher script
+python run_streamlit.py
 ```
 
 **Expected output:**
