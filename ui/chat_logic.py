@@ -1,5 +1,5 @@
 # Chat interaction handling
-from nicegui import ui, background_tasks
+from nicegui import ui, background_tasks, context
 from api_code.rag_query import get_rag_answer
 import asyncio
 import time
@@ -16,6 +16,7 @@ class ChatLogic:
         self.is_first_interaction = True
         self.debug_mode = False
         self.current_question_input = None
+        self.client_context = None
         
         # UI components
         self.components = UIComponents()
@@ -32,11 +33,13 @@ class ChatLogic:
         """Set references to UI elements"""
         self.chat_area = chat_area
         self.question_input = question_input
-        self.char_counter = char_counter  # This might be None now
+        self.char_counter = char_counter
         self.send_btn = send_btn
         self.chat_card = chat_card
         self.chat_button = chat_button
         self.current_question_input = question_input
+        # Store the client context for background tasks
+        self.client_context = context.client
     
     def create_follow_up_handler(self, question_text):
         """Create a handler for follow-up questions"""
@@ -92,11 +95,15 @@ class ChatLogic:
         words = text.split()
         full_text = ""
         
-        # Add user message first
-        self.components.create_user_message(self.chat_area, question)
-        
-        # Add RAG message with streaming
+        # Use stored client context for background task
         with self.chat_area:
+            # Add user message first
+            with ui.row().classes('message-container'):
+                ui.image(UIStyles.USER_LOGO).classes('message-avatar')
+                with ui.column().classes('message-content user-message'):
+                    ui.markdown(f'{question}')
+            
+            # Add RAG message with streaming
             with ui.row().classes('message-container'):
                 ui.image(UIStyles.RAG_LOGO).classes('message-avatar')
                 with ui.column().classes('message-content rag-message') as rag_content:
@@ -104,11 +111,19 @@ class ChatLogic:
                         full_text += word + " "
                         rag_content.clear()
                         ui.markdown(f'{full_text.strip()}')
-                        await asyncio.sleep(0.1)  # Adjust speed here
+                        await asyncio.sleep(0.05)  # Faster streaming
         
         # Add follow-up suggestions after streaming is complete
         follow_ups = UIUtils.generate_follow_up_questions(question, text)
-        self.components.create_follow_up_buttons(self.chat_area, follow_ups, self.create_follow_up_handler)
+        with self.chat_area:
+            if follow_ups:
+                limited_follow_ups = follow_ups[:2]
+                with ui.row().classes('follow-up-suggestions').style('gap:12px; margin-top:8px;'):
+                    for follow_up in limited_follow_ups:
+                        handler = self.create_follow_up_handler(follow_up)
+                        btn = ui.button(follow_up, on_click=handler)
+                        btn.classes('follow-up-btn bounce-in')
+                        btn.style('background:#006C35; color:white; border:1px solid white; border-radius:16px; padding:8px 16px; font-size:0.9rem;')
     
     async def send_question(self):
         """Process and send user question"""
@@ -117,70 +132,74 @@ class ChatLogic:
         # Input validation
         is_valid, error_message = UIUtils.validate_question_input(question)
         if not is_valid:
-            ui.notify(error_message, type='warning')
+            # Use context manager for background task notifications
+            with self.chat_area:
+                with ui.row().classes('message-container'):
+                    ui.image(UIStyles.RAG_LOGO).classes('message-avatar')
+                    with ui.column().classes('message-content rag-message'):
+                        ui.markdown(f'⚠️ {error_message}')
             return
         
         if question:
-            # Show typing indicator with animation
-            typing_indicator = self.components.create_typing_indicator(self.chat_area)
+            # Show typing indicator
+            with self.chat_area:
+                typing_row = ui.row().classes('message-container')
+                with typing_row:
+                    ui.image(UIStyles.RAG_LOGO).classes('message-avatar')
+                    with ui.column().classes('message-content rag-message'):
+                        ui.html('<div style="display:flex; align-items:center; gap:8px;"><div class="typing-indicator"></div><span style="color:#666; font-size:0.9rem;">Searching PIF documents...</span></div>')
             
             # Handle first interaction (name input)
             if self.is_first_interaction:
-                # Extract just the name from the user's input
                 self.user_name = UIUtils.extract_name_from_input(question)
                 self.is_first_interaction = False
                 
                 # Clear chat and show personalized welcome
                 self.chat_area.clear()
                 
-                # Add personalized welcome message
-                self.components.create_user_message(self.chat_area, question)
-                
                 with self.chat_area:
+                    # User message
+                    with ui.row().classes('message-container'):
+                        ui.image(UIStyles.USER_LOGO).classes('message-avatar')
+                        with ui.column().classes('message-content user-message'):
+                            ui.markdown(f'{question}')
+                    
+                    # Personalized welcome
                     with ui.row().classes('message-container bounce-in'):
                         ui.image(UIStyles.RAG_LOGO).classes('message-avatar')
                         with ui.column().classes('message-content rag-message personalized-welcome'):
                             welcome_text = f"🎉 Wonderful to meet you, {self.user_name}! I'm excited to help you explore PIF's amazing world of investments. What would you like to know about today? I can tell you about:\n\n• 💰 Investment strategies and portfolio performance\n• 🏗️ Vision 2030 projects like NEOM\n• 📊 Financial achievements and targets\n• 🌱 Sustainability initiatives\n• 🚀 Technology and innovation investments\n\nJust ask me anything!"
                             ui.markdown(welcome_text)
                 
-                # Update input placeholder
-                self.question_input.placeholder = "What is your question...?"
                 self.question_input.value = ''
-                # Force the placeholder update with multiple attempts
-                ui.timer(0.1, lambda: setattr(self.question_input, 'placeholder', "What is your question...?"), once=True)
-                ui.timer(0.5, lambda: setattr(self.question_input, 'placeholder', "What is your question...?"), once=True)
-                ui.timer(1.0, lambda: setattr(self.question_input, 'placeholder', "What is your question...?"), once=True)
-                ui.timer(0.2, lambda: self.question_input.set_props({'placeholder': "What is your question...?"}), once=True)
-                ui.timer(0.3, lambda: self.create_new_input_field(), once=True)
                 return
             
             # Regular RAG interaction
             try:
                 if self.debug_mode:
-                    # Use debug version to get source information
                     from api_code.rag_query import get_rag_answer_with_sources
                     rag_result = get_rag_answer_with_sources(question)
                     answer = rag_result['answer']
                     
-                    # Show debug information
                     if rag_result['sources']:
                         debug_info = f"\n\n🔍 **Debug Info:**\n"
                         debug_info += f"• Found {len(rag_result['sources'])} relevant sources\n"
                         debug_info += f"• Confidence: {rag_result['confidence']:.2f}\n"
-                        debug_info += f"• Sources: {', '.join([f'{s['year']} (score: {s['score']:.2f})' for s in rag_result['sources']])}\n"
+                        # Fixed: Escape the quotes properly in f-string
+                        sources_str = ', '.join([f"{s['year']} (score: {s['score']:.2f})" for s in rag_result['sources']])
+                        debug_info += f"• Sources: {sources_str}\n"
                         answer += debug_info
                     else:
                         answer += "\n\n🔍 **Debug Info:** No relevant sources found"
                 else:
-                    # Use regular RAG function
                     answer = get_rag_answer(question)
                 
                 if not answer or answer.strip() == "":
                     answer = "I apologize, but I couldn't find a specific answer to your question. Could you please rephrase your question or ask about a different aspect of PIF's investments?"
             except Exception as e:
-                answer = f"I'm experiencing some technical difficulties right now. Error: {str(e)}. Please try again in a moment or ask a different question about PIF's investments."
+                answer = f"I'm experiencing some technical difficulties right now. Please try again in a moment or ask a different question about PIF's investments.\n\n_Error details: {str(e)[:100]}_"
             
-            # Remove typing indicator and display the conversation
+            # Remove typing indicator
             self.chat_area.clear()
             
             # Add to chat history
@@ -190,14 +209,21 @@ class ChatLogic:
                 'timestamp': time.time()
             })
             
-            # Display all previous chat history first
-            for i, chat_item in enumerate(self.chat_history[:-1]):  # All except the latest
-                # User message
-                self.components.create_user_message(self.chat_area, chat_item["question"])
-                # RAG message
-                self.components.create_rag_message(self.chat_area, chat_item["answer"])
+            # Display all previous chat history
+            with self.chat_area:
+                for i, chat_item in enumerate(self.chat_history[:-1]):
+                    # User message
+                    with ui.row().classes('message-container bounce-in'):
+                        ui.image(UIStyles.USER_LOGO).classes('message-avatar')
+                        with ui.column().classes('message-content user-message'):
+                            ui.markdown(f'{chat_item["question"]}')
+                    # RAG message
+                    with ui.row().classes('message-container'):
+                        ui.image(UIStyles.RAG_LOGO).classes('message-avatar')
+                        with ui.column().classes('message-content rag-message'):
+                            ui.markdown(f'{chat_item["answer"]}')
             
-            # Stream the latest response word by word
+            # Stream the latest response
             latest_chat = self.chat_history[-1]
             await self.stream_text(latest_chat["answer"], latest_chat["question"])
             
