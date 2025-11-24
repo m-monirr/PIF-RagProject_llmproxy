@@ -15,6 +15,8 @@ import os
 
 logger = logging.getLogger(__name__)
 
+LLM_PROXY_BASE_URL = "http://localhost:4001"  # Changed from 4000
+
 class LLMProxyManager:
     """Manages LiteLLM proxy for answer generation with fallback support"""
     

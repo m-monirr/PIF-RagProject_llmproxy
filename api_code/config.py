@@ -5,9 +5,9 @@ import os
 EMBEDDING_PROVIDER = "ollama"  # Using local Ollama
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")  # Fixed: Default Ollama port
 
-# Qwen3-embedding model - KEEPING THE POWERFUL MODEL
+# Using the powerful qwen3-embedding model (matches your existing collections)
 EMBED_MODEL_ID = "qwen3-embedding"  # Powerful model (3.2GB, 4096 dims)
-EMBED_DIMENSION = 4096  # qwen3-embedding actual dimension
+EMBED_DIMENSION = 4096  # qwen3-embedding dimension
 
 # Note: To use Local Ollama with smaller model:
 # 1. Download Ollama from https://ollama.com/download

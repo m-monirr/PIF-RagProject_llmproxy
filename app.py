@@ -52,12 +52,12 @@ st.markdown("""
         filter: brightness(1.2);
     }
     
-    /* Hero title - Gold */
+    /* Hero title - Muted Gold #8F7838 */
     .hero-title {
         text-align: center;
         font-size: 2.5rem;
         font-weight: 700;
-        color: #D4AF37;
+        color: #8F7838;
         margin: 30px 0 15px 0;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
@@ -91,8 +91,8 @@ st.markdown("""
     
     .stat-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 16px 48px rgba(212, 175, 55, 0.3);
-        border-color: #D4AF37;
+        box-shadow: 0 16px 48px rgba(143, 120, 56, 0.3);
+        border-color: #8F7838;
     }
     
     .stat-icon {
@@ -103,7 +103,7 @@ st.markdown("""
     .stat-value {
         font-size: 2.2rem;
         font-weight: 700;
-        color: #D4AF37;
+        color: #8F7838;
         margin: 10px 0;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
@@ -134,8 +134,8 @@ st.markdown("""
     
     .feature-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 12px 32px rgba(212, 175, 55, 0.25);
-        border-color: #D4AF37;
+        box-shadow: 0 12px 32px rgba(143, 120, 56, 0.25);
+        border-color: #8F7838;
     }
     
     .feature-icon {
@@ -146,7 +146,7 @@ st.markdown("""
     .feature-title {
         font-size: 1.2rem;
         font-weight: 600;
-        color: #D4AF37;
+        color: #8F7838;
         margin-bottom: 10px;
     }
     
@@ -155,36 +155,59 @@ st.markdown("""
         line-height: 1.6;
     }
     
-    /* Floating action buttons - Fixed position */
-    .floating-buttons {
+    /* Floating action buttons container - Fixed top-right */
+    .floating-container {
         position: fixed;
         top: 20px;
         right: 20px;
-        z-index: 1000;
+        z-index: 9999;
         display: flex;
-        gap: 10px;
+        flex-direction: column;
+        gap: 12px;
     }
     
-    .floating-btn {
-        background: linear-gradient(135deg, #00A651 0%, #007A3D 100%);
-        color: white;
-        border: 2px solid #D4AF37;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
+    /* Modern floating button style */
+    .float-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.4rem;
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 166, 81, 0.4);
-        transition: all 0.3s ease;
-        font-size: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        border: 2px solid #8F7838;
     }
     
-    .floating-btn:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
-        background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
+    .float-btn-back {
+        background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
+        color: #8F7838;
+    }
+    
+    .float-btn-back:hover {
+        background: linear-gradient(135deg, #8F7838 0%, #6F5828 100%);
+        color: #FFFFFF;
+        transform: translateX(-4px) scale(1.05);
+        box-shadow: 0 6px 24px rgba(143, 120, 56, 0.5);
+    }
+    
+    .float-btn-restart {
+        background: linear-gradient(135deg, #00A651 0%, #007A3D 100%);
+        color: white;
+    }
+    
+    .float-btn-restart:hover {
+        background: linear-gradient(135deg, #00D46E 0%, #00A651 100%);
+        transform: rotate(180deg) scale(1.05);
+        box-shadow: 0 6px 24px rgba(0, 166, 81, 0.5);
+    }
+    
+    /* Hide the actual Streamlit buttons that trigger actions */
+    button[key="floating_back_actual"],
+    button[key="floating_restart_actual"] {
+        display: none !important;
     }
     
     /* Chat messages - Dark theme */
@@ -200,7 +223,7 @@ st.markdown("""
     [data-testid="stChatMessage"][data-is-user="true"] {
         background: linear-gradient(135deg, #00A651 0%, #007A3D 100%) !important;
         color: white !important;
-        border-color: #D4AF37;
+        border-color: #8F7838;
     }
     
     [data-testid="stChatMessage"][data-is-user="false"] {
@@ -229,10 +252,10 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Buttons - Gold accent */
+    /* Buttons - Muted Gold accent */
     .stButton > button {
-        background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
-        color: #0A0A0A;
+        background: linear-gradient(135deg, #8F7838 0%, #6F5828 100%);
+        color: #FFFFFF;
         font-weight: 600;
         border: none;
         border-radius: 12px;
@@ -242,7 +265,8 @@ st.markdown("""
     
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        box-shadow: 0 6px 20px rgba(143, 120, 56, 0.4);
+        background: linear-gradient(135deg, #A08948 0%, #8F7838 100%);
     }
     
     /* Input - Dark theme */
@@ -256,8 +280,8 @@ st.markdown("""
     
     .stTextInput > div > div > input:focus,
     .stChatInput > div > div > input:focus {
-        border-color: #D4AF37;
-        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+        border-color: #8F7838;
+        box-shadow: 0 0 0 3px rgba(143, 120, 56, 0.2);
     }
     
     /* Responsive */
@@ -268,13 +292,13 @@ st.markdown("""
         .hero-subtitle {
             font-size: 1rem;
         }
-        .floating-buttons {
-            top: 10px;
-            right: 10px;
+        .floating-container {
+            top: 12px;
+            right: 12px;
         }
-        .floating-btn {
-            width: 50px;
-            height: 50px;
+        .float-btn {
+            width: 48px;
+            height: 48px;
             font-size: 1.2rem;
         }
     }
@@ -422,28 +446,6 @@ def handle_user_input(user_input):
 def main():
     """Main application"""
     
-    # Floating action buttons (always visible in chat)
-    if st.session_state.show_chat:
-        st.markdown("""
-        <div class="floating-buttons">
-            <div class="floating-btn" title="Back to Home" id="back-home-btn">⬅️</div>
-            <div class="floating-btn" title="Restart Chat" id="restart-chat-btn">🔄</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Handle floating button clicks with hidden buttons
-        col_back, col_restart = st.columns(2)
-        with col_back:
-            if st.button("", key="floating_back", help="Back to Home", type="secondary"):
-                st.session_state.show_chat = False
-                st.rerun()
-        with col_restart:
-            if st.button("", key="floating_restart", help="Restart Chat", type="secondary"):
-                st.session_state.messages = []
-                st.session_state.user_name = None
-                st.session_state.last_streamed_idx = -1
-                st.rerun()
-    
     with st.sidebar:
         # PIF Logo in sidebar
         st.markdown(f'<div style="text-align:center; padding:20px;"><img src="{PIF_LOGO_URL}" style="width:120px; filter:brightness(1.5);"></div>', unsafe_allow_html=True)
@@ -451,15 +453,18 @@ def main():
         st.markdown("## ⚙️ Settings")
         
         if st.session_state.show_chat:
-            if st.button("🏠 Back to Home", use_container_width=True, key="sidebar_back"):
-                st.session_state.show_chat = False
-                st.rerun()
-            
-            if st.button("🔄 Restart Chat", use_container_width=True, key="sidebar_restart"):
-                st.session_state.messages = []
-                st.session_state.user_name = None
-                st.session_state.last_streamed_idx = -1
-                st.rerun()
+            # Sidebar navigation buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🏠 Home", use_container_width=True, key="sidebar_back"):
+                    st.session_state.show_chat = False
+                    st.rerun()
+            with col2:
+                if st.button("🔄 Restart", use_container_width=True, key="sidebar_restart"):
+                    st.session_state.messages = []
+                    st.session_state.user_name = None
+                    st.session_state.last_streamed_idx = -1
+                    st.rerun()
             
             st.markdown("---")
         
@@ -564,6 +569,232 @@ def main():
                 st.rerun()
     
     else:
+        # Chat interface
+        
+        # Floating action buttons with click handlers
+        col1, col2 = st.columns([20, 1])
+        
+        with col2:
+            # Back button
+            if st.button("⬅", key="float_back", help="Back to Home", use_container_width=False):
+                st.session_state.show_chat = False
+                st.rerun()
+            
+            # Restart button
+            if st.button("↻", key="float_restart", help="Restart Chat", use_container_width=False):
+                st.session_state.messages = []
+                st.session_state.user_name = None
+                st.session_state.last_streamed_idx = -1
+                st.rerun()
+        
+        # Add custom CSS to style these buttons as floating with enhanced animations
+        st.markdown("""
+        <style>
+        /* Style the specific buttons */
+        button[key="float_back"],
+        button[key="float_restart"] {
+            position: fixed !important;
+            right: 20px !important;
+            width: 56px !important;
+            height: 56px !important;
+            border-radius: 16px !important;
+            min-height: 56px !important;
+            padding: 0 !important;
+            z-index: 9999 !important;
+            font-size: 1.4rem !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+            border: 2px solid #8F7838 !important;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer !important;
+        }
+        
+        /* First button (Back) - Muted Gold/Dark theme */
+        button[key="float_back"] {
+            top: 20px !important;
+            background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%) !important;
+            color: #8F7838 !important;
+        }
+        
+        button[key="float_back"]:hover {
+            background: linear-gradient(135deg, #8F7838 0%, #6F5828 100%) !important;
+            color: #FFFFFF !important;
+            transform: translateX(-8px) scale(1.1) rotate(-5deg) !important;
+            box-shadow: 0 8px 32px rgba(143, 120, 56, 0.6) !important;
+            border-color: #FFFFFF !important;
+        }
+        
+        button[key="float_back"]:active {
+            transform: translateX(-6px) scale(1.05) !important;
+            box-shadow: 0 4px 16px rgba(143, 120, 56, 0.4) !important;
+        }
+        
+        /* Second button (Restart) - Green theme */
+        button[key="float_restart"] {
+            top: 88px !important;
+            background: linear-gradient(135deg, #00A651 0%, #007A3D 100%) !important;
+            color: white !important;
+        }
+        
+        button[key="float_restart"]:hover {
+            background: linear-gradient(135deg, #00D46E 0%, #00A651 100%) !important;
+            transform: rotate(360deg) scale(1.15) !important;
+            box-shadow: 0 8px 32px rgba(0, 166, 81, 0.6) !important;
+            border-color: #FFFFFF !important;
+        }
+        
+        button[key="float_restart"]:active {
+            transform: rotate(180deg) scale(1.05) !important;
+            box-shadow: 0 4px 16px rgba(0, 166, 81, 0.4) !important;
+        }
+        
+        /* Pulse animation on page load */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 6px 24px rgba(143, 120, 56, 0.5);
+            }
+        }
+        
+        button[key="float_back"],
+        button[key="float_restart"] {
+            animation: pulse 2s ease-in-out infinite !important;
+        }
+        
+        button[key="float_back"]:hover,
+        button[key="float_restart"]:hover {
+            animation: none !important;
+        }
+        
+        /* Ripple effect on click */
+        @keyframes ripple {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+        
+        button[key="float_back"]::before,
+        button[key="float_restart"]::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(143, 120, 56, 0.3);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s, opacity 0.5s;
+        }
+        
+        button[key="float_back"]:active::before,
+        button[key="float_restart"]:active::before {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0;
+        }
+        
+        /* Glow effect */
+        button[key="float_back"]::after,
+        button[key="float_restart"]::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 16px;
+            background: linear-gradient(45deg, #8F7838, #00A651, #8F7838);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        button[key="float_back"]:hover::after,
+        button[key="float_restart"]:hover::after {
+            opacity: 0.6;
+            animation: rotate 2s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Hide the column wrapper */
+        div[data-testid="column"]:has(button[key="float_back"]),
+        div[data-testid="column"]:has(button[key="float_restart"]) {
+            position: fixed !important;
+            right: 0 !important;
+            top: 0 !important;
+            width: auto !important;
+            background: transparent !important;
+            z-index: 9999 !important;
+        }
+        
+        /* Tooltip on hover */
+        button[key="float_back"]:hover::before {
+            content: attr(aria-label);
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(26, 26, 26, 0.95);
+            color: #8F7838;
+            padding: 8px 12px;
+            border-radius: 8px;
+            white-space: nowrap;
+            margin-right: 12px;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid #8F7838;
+        }
+        
+        button[key="float_restart"]:hover::before {
+            content: attr(aria-label);
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 166, 81, 0.95);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            white-space: nowrap;
+            margin-right: 12px;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid white;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            button[key="float_back"],
+            button[key="float_restart"] {
+                width: 48px !important;
+                height: 48px !important;
+                font-size: 1.2rem !important;
+                right: 12px !important;
+            }
+            
+            button[key="float_back"] {
+                top: 12px !important;
+            }
+            
+            button[key="float_restart"] {
+                top: 72px !important;
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         # Chat interface header with logo
         st.markdown(f'<div class="logo-container"><img src="{PIF_LOGO_URL}" alt="PIF Logo" style="width: 150px;"></div>', unsafe_allow_html=True)
         st.markdown('<div class="hero-title" style="font-size: 2rem; margin-bottom: 30px;">PIF Chat Assistant</div>', unsafe_allow_html=True)

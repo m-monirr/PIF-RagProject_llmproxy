@@ -3,6 +3,7 @@ import ollama
 from typing import List, Union
 import logging
 from .config import EMBEDDING_PROVIDER, EMBED_MODEL_ID, OLLAMA_BASE_URL, EMBED_DIMENSION
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +15,19 @@ def get_ollama_client():
     global _ollama_client
     if _ollama_client is None:
         try:
-            _ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
+            _ollama_client = ollama.Client(
+                host=OLLAMA_BASE_URL,
+                timeout=60.0  # Increased timeout to 60 seconds
+            )
             logger.info(f"✅ Ollama client initialized at {OLLAMA_BASE_URL}")
+            
+            # Test connection with a simple request
+            try:
+                _ollama_client.list()
+                logger.info("✅ Ollama connection verified")
+            except Exception as e:
+                logger.warning(f"Ollama might not be ready: {e}")
+                
         except Exception as e:
             logger.error(f"Failed to initialize Ollama client: {e}")
             raise RuntimeError(f"Could not connect to Ollama: {e}")
@@ -83,32 +95,42 @@ def embed(texts: Union[str, List[str]], model=None, tokenizer=None, batch_size=4
     
     return embeddings
 
-def embed_query(text: str, model=None, tokenizer=None) -> np.ndarray:
-    """Embed a single query using qwen3-embedding"""
+def embed_query(text: str, model=None, tokenizer=None, max_retries=3) -> np.ndarray:
+    """Embed a single query using qwen3-embedding with retry logic"""
     client = get_ollama_client()
     
-    try:
-        response = client.embeddings(
-            model=EMBED_MODEL_ID,
-            prompt=text,
-            options={
-                "num_thread": 4,
-            }
-        )
-        
-        if 'embedding' in response:
-            vec = np.array([response['embedding']], dtype=np.float32)
-        else:
-            logger.warning(f"No embedding in response for query: {text[:50]}...")
-            vec = np.zeros((1, EMBED_DIMENSION), dtype=np.float32)
-        
-        # Normalize to unit length
-        norm = np.linalg.norm(vec)
-        if norm > 0:
-            vec = vec / norm
+    for attempt in range(max_retries):
+        try:
+            response = client.embeddings(
+                model=EMBED_MODEL_ID,
+                prompt=text,
+                options={
+                    "num_thread": 4,
+                },
+                # Add keep_alive to prevent model unloading
+                keep_alive="5m"
+            )
             
-        return vec
-        
-    except Exception as e:
-        logger.error(f"Error embedding query: {e}")
-        return np.zeros((1, EMBED_DIMENSION), dtype=np.float32)
+            if 'embedding' in response:
+                vec = np.array([response['embedding']], dtype=np.float32)
+            else:
+                logger.warning(f"No embedding in response for query: {text[:50]}...")
+                vec = np.zeros((1, EMBED_DIMENSION), dtype=np.float32)
+            
+            # Normalize to unit length
+            norm = np.linalg.norm(vec)
+            if norm > 0:
+                vec = vec / norm
+                
+            return vec
+            
+        except Exception as e:
+            logger.error(f"Error embedding query (attempt {attempt + 1}/{max_retries}): {e}")
+            
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                logger.info(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                logger.error(f"Failed to embed query after {max_retries} attempts")
+                return np.zeros((1, EMBED_DIMENSION), dtype=np.float32)
