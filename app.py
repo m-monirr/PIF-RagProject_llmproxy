@@ -19,19 +19,19 @@ st.set_page_config(
 # PIF Logo URL
 PIF_LOGO_URL = "https://cdn.brandfetch.io/idnYHC3i7K/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1754092788470"
 
-# Apply Saudi-themed CSS
+# Apply PIF-themed CSS (Black, Green, Gold)
 st.markdown("""
 <style>
-    /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
     
     * {
         font-family: 'Montserrat', sans-serif;
     }
     
-    /* Main container */
+    /* Main container - Black background */
     .main {
-        background: linear-gradient(135deg, #F5F3ED 0%, #FFFFFF 100%);
+        background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 100%);
+        color: #FFFFFF;
     }
     
     /* Hide Streamlit branding */
@@ -44,30 +44,29 @@ st.markdown("""
     .logo-container {
         text-align: center;
         padding: 40px 0 20px 0;
-        animation: fadeIn 1s ease-out;
     }
     
     .logo-container img {
         width: 200px;
         height: auto;
+        filter: brightness(1.2);
     }
     
-    /* Hero title */
+    /* Hero title - Gold */
     .hero-title {
         text-align: center;
         font-size: 2.5rem;
         font-weight: 700;
-        color: #222;
+        color: #D4AF37;
         margin: 30px 0 15px 0;
-        animation: slideDown 1s ease-out;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
     
     .hero-subtitle {
         text-align: center;
         font-size: 1.2rem;
-        color: #006C35;
+        color: #00A651;
         margin-bottom: 40px;
-        animation: fadeIn 1.5s ease-out;
     }
     
     /* Stats container */
@@ -80,18 +79,20 @@ st.markdown("""
     }
     
     .stat-card {
-        background: white;
+        background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
+        border: 2px solid #00A651;
         border-radius: 16px;
         padding: 30px;
         text-align: center;
         min-width: 250px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 24px rgba(0, 166, 81, 0.2);
         transition: all 0.3s ease;
     }
     
     .stat-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 16px 48px rgba(0, 108, 53, 0.15);
+        box-shadow: 0 16px 48px rgba(212, 175, 55, 0.3);
+        border-color: #D4AF37;
     }
     
     .stat-icon {
@@ -102,13 +103,14 @@ st.markdown("""
     .stat-value {
         font-size: 2.2rem;
         font-weight: 700;
-        color: #006C35;
+        color: #D4AF37;
         margin: 10px 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
     
     .stat-label {
         font-size: 1rem;
-        color: #666;
+        color: #CCCCCC;
     }
     
     /* Features grid */
@@ -122,16 +124,18 @@ st.markdown("""
     }
     
     .feature-card {
-        background: white;
+        background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
+        border: 1px solid #00A651;
         border-radius: 16px;
         padding: 30px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 16px rgba(0, 166, 81, 0.15);
         transition: all 0.3s ease;
     }
     
     .feature-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 12px 32px rgba(0, 108, 53, 0.12);
+        box-shadow: 0 12px 32px rgba(212, 175, 55, 0.25);
+        border-color: #D4AF37;
     }
     
     .feature-icon {
@@ -142,45 +146,67 @@ st.markdown("""
     .feature-title {
         font-size: 1.2rem;
         font-weight: 600;
-        color: #006C35;
+        color: #D4AF37;
         margin-bottom: 10px;
     }
     
     .feature-desc {
-        color: #666;
+        color: #CCCCCC;
         line-height: 1.6;
     }
     
-    /* Chat container */
-    .chat-section {
-        max-width: 900px;
-        margin: 50px auto;
-        padding: 0 20px;
+    /* Floating action buttons - Fixed position */
+    .floating-buttons {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        gap: 10px;
     }
     
-    /* Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    .floating-btn {
+        background: linear-gradient(135deg, #00A651 0%, #007A3D 100%);
+        color: white;
+        border: 2px solid #D4AF37;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 166, 81, 0.4);
+        transition: all 0.3s ease;
+        font-size: 1.5rem;
     }
     
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .floating-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+        background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
     }
     
-    /* Chat messages */
+    /* Chat messages - Dark theme */
     .stChatMessage {
         border-radius: 12px;
         padding: 15px;
         margin: 10px 0;
         animation: slideIn 0.3s ease-out;
+        background: #1A1A1A !important;
+        border: 1px solid #00A651;
+    }
+    
+    [data-testid="stChatMessage"][data-is-user="true"] {
+        background: linear-gradient(135deg, #00A651 0%, #007A3D 100%) !important;
+        color: white !important;
+        border-color: #D4AF37;
+    }
+    
+    [data-testid="stChatMessage"][data-is-user="false"] {
+        background: #2A2A2A !important;
+        color: #FFFFFF !important;
+        border-color: #00A651;
     }
     
     @keyframes slideIn {
@@ -194,13 +220,44 @@ st.markdown("""
         }
     }
     
-    /* Sidebar */
+    /* Sidebar - Green gradient */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #006C35 0%, #004D25 100%);
+        background: linear-gradient(180deg, #00A651 0%, #007A3D 100%);
     }
     
     [data-testid="stSidebar"] * {
         color: white !important;
+    }
+    
+    /* Buttons - Gold accent */
+    .stButton > button {
+        background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
+        color: #0A0A0A;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+    }
+    
+    /* Input - Dark theme */
+    .stTextInput > div > div > input,
+    .stChatInput > div > div > input {
+        background: #2A2A2A;
+        color: white;
+        border: 2px solid #00A651;
+        border-radius: 12px;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stChatInput > div > div > input:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
     }
     
     /* Responsive */
@@ -211,15 +268,28 @@ st.markdown("""
         .hero-subtitle {
             font-size: 1rem;
         }
-        .stats-row {
-            flex-direction: column;
-            align-items: center;
+        .floating-buttons {
+            top: 10px;
+            right: 10px;
         }
-        .stat-card {
-            width: 90%;
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
         }
     }
 </style>
+
+<script>
+// Enable clipboard copy functionality
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        console.log('Copied to clipboard successfully!');
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+</script>
 """, unsafe_allow_html=True)
 
 # Initialize session state
@@ -231,6 +301,8 @@ if 'debug_mode' not in st.session_state:
     st.session_state.debug_mode = False
 if 'show_chat' not in st.session_state:
     st.session_state.show_chat = False
+if 'last_streamed_idx' not in st.session_state:
+    st.session_state.last_streamed_idx = -1
 
 # Helper functions
 def extract_name_from_input(user_input):
@@ -293,19 +365,23 @@ def generate_follow_up_questions(question, answer):
     
     return follow_ups[:2]
 
+def stream_text_output(placeholder, text):
+    """Stream text word by word"""
+    words = text.split()
+    displayed_text = ""
+    for word in words:
+        displayed_text += word + " "
+        placeholder.markdown(displayed_text + "▌")
+        time.sleep(0.03)
+    placeholder.markdown(displayed_text.strip())
+
 def handle_user_input(user_input):
     """Process user input"""
     
     if st.session_state.user_name is None:
         st.session_state.user_name = extract_name_from_input(user_input)
-        
         st.session_state.messages.append({'role': 'user', 'content': user_input})
-        
-        welcome_msg = f"🎉 Wonderful to meet you, **{st.session_state.user_name}**!\n\n" \
-                     f"I'm excited to help you explore PIF's investments.\n\n" \
-                     f"**What would you like to know?**\n\n" \
-                     f"• 💰 Investment strategies\n• 🏗️ Vision 2030 projects\n• 📊 Financial achievements\n• 🌱 Sustainability initiatives\n• 🚀 Technology investments"
-        
+        welcome_msg = f"🎉 Wonderful to meet you, **{st.session_state.user_name}**!\n\nI'm excited to help you explore PIF's investments.\n\n**What would you like to know?**\n\n• 💰 Investment strategies\n• 🏗️ Vision 2030 projects\n• 📊 Financial achievements\n• 🌱 Sustainability initiatives\n• 🚀 Technology investments"
         st.session_state.messages.append({'role': 'assistant', 'content': welcome_msg, 'follow_ups': []})
         st.rerun()
         return
@@ -338,7 +414,6 @@ def handle_user_input(user_input):
             
             follow_ups = generate_follow_up_questions(user_input, answer)
             st.session_state.messages.append({'role': 'assistant', 'content': answer, 'follow_ups': follow_ups[:2]})
-            
         except Exception as e:
             st.session_state.messages.append({'role': 'assistant', 'content': f"Error: {str(e)[:100]}", 'follow_ups': []})
     
@@ -347,25 +422,59 @@ def handle_user_input(user_input):
 def main():
     """Main application"""
     
+    # Floating action buttons (always visible in chat)
+    if st.session_state.show_chat:
+        st.markdown("""
+        <div class="floating-buttons">
+            <div class="floating-btn" title="Back to Home" id="back-home-btn">⬅️</div>
+            <div class="floating-btn" title="Restart Chat" id="restart-chat-btn">🔄</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Handle floating button clicks with hidden buttons
+        col_back, col_restart = st.columns(2)
+        with col_back:
+            if st.button("", key="floating_back", help="Back to Home", type="secondary"):
+                st.session_state.show_chat = False
+                st.rerun()
+        with col_restart:
+            if st.button("", key="floating_restart", help="Restart Chat", type="secondary"):
+                st.session_state.messages = []
+                st.session_state.user_name = None
+                st.session_state.last_streamed_idx = -1
+                st.rerun()
+    
     with st.sidebar:
+        # PIF Logo in sidebar
+        st.markdown(f'<div style="text-align:center; padding:20px;"><img src="{PIF_LOGO_URL}" style="width:120px; filter:brightness(1.5);"></div>', unsafe_allow_html=True)
+        
         st.markdown("## ⚙️ Settings")
         
         if st.session_state.show_chat:
-            if st.button("🏠 Back to Home", use_container_width=True, type="secondary"):
+            if st.button("🏠 Back to Home", use_container_width=True, key="sidebar_back"):
                 st.session_state.show_chat = False
                 st.rerun()
+            
+            if st.button("🔄 Restart Chat", use_container_width=True, key="sidebar_restart"):
+                st.session_state.messages = []
+                st.session_state.user_name = None
+                st.session_state.last_streamed_idx = -1
+                st.rerun()
+            
             st.markdown("---")
         
         st.session_state.debug_mode = st.toggle("🐛 Debug Mode", value=st.session_state.debug_mode, help="Show source information")
         
-        if st.button("🔄 Clear Chat", use_container_width=True):
+        if st.button("🗑️ Clear All", use_container_width=True, key="clear_all"):
             st.session_state.messages = []
             st.session_state.user_name = None
+            st.session_state.last_streamed_idx = -1
+            st.session_state.show_chat = False
             st.rerun()
         
         st.markdown("---")
         
-        with st.expander("💡 Tips"):
+        with st.expander("💡 Tips for Better Results"):
             st.markdown("""
             **Be Specific**: 
             - ✅ "PIF's investment in NEOM 2023"
@@ -376,18 +485,19 @@ def main():
             - NEOM, Vision 2030
             - Financial, revenue, jobs
             
-            **Languages**: English & Arabic supported
+            **Languages**: 
+            - English & Arabic fully supported
             """)
         
         st.markdown("---")
-        st.markdown("### 📊 Stats")
-        st.metric("Messages", len(st.session_state.messages))
+        st.markdown("### 📊 Statistics")
+        st.metric("Total Messages", len(st.session_state.messages))
         if st.session_state.user_name:
-            st.info(f"👤 {st.session_state.user_name}")
+            st.success(f"👤 Welcome, {st.session_state.user_name}!")
     
     if not st.session_state.show_chat:
+        # Landing page
         st.markdown(f'<div class="logo-container"><img src="{PIF_LOGO_URL}" alt="PIF Logo"></div>', unsafe_allow_html=True)
-        
         st.markdown('<div class="hero-title">Pioneering Investments Send Ripples of Real Impact</div>', unsafe_allow_html=True)
         st.markdown('<div class="hero-subtitle">💬 Ask any question about PIF annual reports and get instant AI-powered answers</div>', unsafe_allow_html=True)
         
@@ -454,21 +564,42 @@ def main():
                 st.rerun()
     
     else:
+        # Chat interface header with logo
         st.markdown(f'<div class="logo-container"><img src="{PIF_LOGO_URL}" alt="PIF Logo" style="width: 150px;"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="hero-title" style="font-size: 2rem;">PIF Chat Assistant</div>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-title" style="font-size: 2rem; margin-bottom: 30px;">PIF Chat Assistant</div>', unsafe_allow_html=True)
         
+        # Display chat messages
         for idx, msg in enumerate(st.session_state.messages):
             with st.chat_message(msg["role"], avatar="🇸🇦" if msg["role"] == "assistant" else "👤"):
-                st.markdown(msg["content"])
+                # Stream ONLY if this is the latest message AND hasn't been streamed yet
+                should_stream = (
+                    msg["role"] == "assistant" and 
+                    idx == len(st.session_state.messages) - 1 and 
+                    idx > st.session_state.last_streamed_idx
+                )
                 
+                if should_stream:
+                    placeholder = st.empty()
+                    stream_text_output(placeholder, msg["content"])
+                    st.session_state.last_streamed_idx = idx
+                else:
+                    st.markdown(msg["content"])
+                
+                # Copy button for assistant messages
+                if msg["role"] == "assistant":
+                    if st.button("📋 Copy", key=f"copy_msg_{idx}", help="Copy to clipboard"):
+                        st.code(msg["content"], language="markdown")
+                        st.toast("✅ Message ready to copy!", icon="📋")
+                
+                # Follow-up buttons
                 if "follow_ups" in msg and msg["follow_ups"]:
                     cols = st.columns(len(msg["follow_ups"]))
                     for i, follow_up in enumerate(msg["follow_ups"]):
                         with cols[i]:
-                            # Fixed: Make key unique using both message index and follow-up index
                             if st.button(follow_up, key=f"followup_msg{idx}_opt{i}"):
                                 handle_user_input(follow_up)
         
+        # Chat input
         if prompt := st.chat_input("What's your name?" if not st.session_state.user_name else "Ask about PIF investments..."):
             handle_user_input(prompt)
 
