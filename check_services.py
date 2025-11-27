@@ -70,11 +70,11 @@ def main():
         print("   💡 Start with: docker run -d -p 6333:6333 -p 6334:6334 -v \"%cd%\\qdrant_storage\":/qdrant/storage qdrant/qdrant")
     print()
     
-    # Check LLM Proxy (answer generation)
+    # Check LLM Proxy (answer generation) - FIXED PORT
     print("3️⃣ Checking LLM Proxy (Answer Generation)...")
     if not check_service("LLM Proxy", "http://localhost:4000/health"):
         all_ok = False
-        print("   💡 Start with: python start_llm_proxy.py")
+        print("   💡 Start with: python start_llm_proxy_alternative.py")
     print()
     
     # Summary
@@ -82,7 +82,7 @@ def main():
     if all_ok:
         print("🎉 All services are running!")
         print("\n✅ You can now start the application:")
-        print("   python rag_chat_ui.py")
+        print("   streamlit run app.py")
     else:
         print("⚠️  Some services are not running!")
         print("\n📋 Please start the missing services above")

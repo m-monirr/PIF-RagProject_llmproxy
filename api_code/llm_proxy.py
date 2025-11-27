@@ -1,6 +1,6 @@
 """
 LLM Proxy Manager for RAG Answer Generation
-Handles Ollama Cloud integration with fallback mechanisms
+Handles Groq + Ollama Cloud integration with fallback mechanisms
 """
 
 import logging
@@ -15,7 +15,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
-LLM_PROXY_BASE_URL = "http://localhost:4001"  # Changed from 4000
+LLM_PROXY_BASE_URL = "http://localhost:4000"
 
 class LLMProxyManager:
     """Manages LiteLLM proxy for answer generation with fallback support"""
@@ -69,7 +69,7 @@ class LLMProxyManager:
             # Start proxy
             logger.info(f"🚀 Starting LLM proxy on port {self.port}...")
             logger.info(f"📋 Using config: {self.config_path.absolute()}")
-            logger.info(f"🌐 Connecting to Ollama Cloud (https://cloud.ollama.ai)")
+            logger.info(f"🌐 Connecting to Groq + Ollama Cloud")
             
             # Use 'litellm' directly instead of 'python -m litellm'
             cmd = [
@@ -106,8 +106,8 @@ class LLMProxyManager:
                 if self._check_proxy_health():
                     logger.info(f"✅ LLM proxy started successfully!")
                     logger.info(f"   📍 Base URL: {self.base_url}")
-                    logger.info(f"   🤖 Model: Ollama Cloud (qwen2.5:3b)")
-                    logger.info(f"   🔄 Fallback: llama3.2:3b")
+                    logger.info(f"   🤖 Primary: Groq (llama3-8b)")
+                    logger.info(f"   🔄 Fallbacks: Ollama Cloud models")
                     self._initialize_client()
                     return True
                 
@@ -135,19 +135,24 @@ class LLMProxyManager:
             logger.error(traceback.format_exc())
             return False
     
-    def _check_proxy_health(self) -> bool:
-        """Check if proxy is healthy"""
-        try:
-            response = requests.get(f"{self.base_url}/health", timeout=3)
-            return response.status_code == 200
-        except:
-            return False
+    def _check_proxy_health(self, max_retries=3) -> bool:
+        """Check if proxy is healthy with retries"""
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(f"{self.base_url}/health", timeout=5)
+                if response.status_code == 200:
+                    return True
+            except requests.exceptions.RequestException:
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                continue
+        return False
     
     def _initialize_client(self):
         """Initialize OpenAI client for proxy"""
         try:
             self.client = openai.OpenAI(
-                api_key="dummy-key",  # LiteLLM doesn't need real key for Ollama Cloud
+                api_key="dummy-key",  # LiteLLM doesn't need real key
                 base_url=self.base_url
             )
             self._is_running = True
@@ -221,7 +226,7 @@ Provide a comprehensive and accurate answer based on the context above. Use clea
 
             # Call LLM through proxy
             response = self.client.chat.completions.create(
-                model="rag-llm",  # This will use primary + fallbacks
+                model="rag-llm",  # This will use Groq primary + fallbacks
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -275,9 +280,18 @@ Provide a comprehensive and accurate answer based on the context above. Use clea
 _proxy_instance: Optional[LLMProxyManager] = None
 
 def get_llm_proxy() -> LLMProxyManager:
-    """Get or create global LLM proxy instance"""
+    """Get or create global LLM proxy instance with health check"""
     global _proxy_instance
     if _proxy_instance is None:
         _proxy_instance = LLMProxyManager()
-        _proxy_instance.start_proxy()
+        
+        # Try to connect to existing proxy first
+        if not _proxy_instance._check_proxy_health(max_retries=2):
+            logger.warning("LLM proxy not detected, please start it manually:")
+            logger.warning("  python start_llm_proxy_alternative.py")
+            # Don't auto-start, let user start manually
+        else:
+            _proxy_instance._initialize_client()
+            logger.info("✅ Connected to existing LLM proxy")
+            
     return _proxy_instance

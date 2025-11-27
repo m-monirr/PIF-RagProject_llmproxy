@@ -34,7 +34,7 @@ if __name__ == "__main__":
             sys.exit(1)
         
         print(f"📋 Using config: {config_file.absolute()}")
-        print(f"🌐 Connecting to Ollama Cloud (https://cloud.ollama.ai)\n")
+        print(f"🌐 Connecting to Groq (Primary) + Ollama Cloud (Fallback)\n")
         
         # Load config
         with open(config_file, 'r') as f:
@@ -63,15 +63,15 @@ if __name__ == "__main__":
         
         print("\n✅ LLM Proxy initialized successfully!")
         print("   📍 Base URL: http://0.0.0.0:4000")
-        print("   🤖 Model: Ollama Cloud (qwen2.5:3b)")
-        print("   🔄 Fallback: llama3.2:3b\n")
-        print("Now you can start the main application with: python rag_chat_ui.py\n")
+        print("   🤖 Primary: Groq (llama3-8b-8192) - FREE & FAST!")
+        print("   🔄 Fallback: Ollama Cloud (qwen2.5:3b, llama3.2:3b)\n")
+        print("Now you can start the main application with: streamlit run app.py\n")
         
-        # Run the server
+        # Run the server on port 4000
         uvicorn.run(
             app,
             host="0.0.0.0",
-            port=4001,  # Changed from 4000
+            port=4000,
             log_level="info",
             access_log=False
         )

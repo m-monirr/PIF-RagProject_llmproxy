@@ -1,19 +1,26 @@
 # LLM Proxy Configuration for RAG Answer Generation
-# Using Ollama Cloud (Free - No local models needed!)
+# Using Ollama Cloud (Free) + Groq (Free - Super Fast!)
 
 router_settings:
   enable_pre_call_checks: false
 
 model_list:
-  # Primary: Ollama Cloud - qwen2.5:3b (Free tier)
+  # Primary: Groq - llama3-8b (FREE, SUPER FAST!)
   - model_name: "rag-llm"
+    litellm_params:
+      model: "groq/llama3-8b-8192"
+      api_key: "os.environ/GROQ_API_KEY"
+      rpm: 30
+
+  # Fallback 1: Ollama Cloud - qwen2.5:3b
+  - model_name: "rag-llm-ollama"
     litellm_params:
       model: "ollama_chat/qwen2.5:3b"
       api_base: "https://cloud.ollama.ai"
       rpm: 60
 
-  # Fallback: Ollama Cloud - llama3.2:3b
-  - model_name: "rag-llm-fallback"
+  # Fallback 2: Ollama Cloud - llama3.2:3b
+  - model_name: "rag-llm-ollama-fallback"
     litellm_params:
       model: "ollama_chat/llama3.2:3b"
       api_base: "https://cloud.ollama.ai"
@@ -22,7 +29,7 @@ model_list:
 litellm_settings:
   num_retries: 2
   fallbacks: [
-    {"rag-llm": ["rag-llm-fallback"]}
+    {"rag-llm": ["rag-llm-ollama", "rag-llm-ollama-fallback"]}
   ]
   request_timeout: 60
   drop_params: true
