@@ -1,80 +1,82 @@
-# 🚀 Running PIF RAG Chat with LLM Proxy
+# 🚀 Running PIF RAG Chat - QUICK START
 
-## Prerequisites Checklist
+## ⚡ Quick Start (Easiest Way)
 
-Before running, ensure you have:
+### Windows Users - Double-click to start:
+
+```batch
+START_HERE.bat
+```
+
+This will:
+1. ✅ Check all services
+2. 🚀 Start LLM Proxy in a separate window
+3. 🌐 Launch Streamlit app automatically
+
+**That's it!** Your browser will open automatically.
+
+---
+
+## 📋 Manual Start (Step-by-Step)
+
+### Prerequisites Checklist
 
 - ✅ Python 3.8+ installed
-- ✅ Docker installed and running
-- ✅ All dependencies installed: `pip install -r requirements.txt`
-- ✅ Ollama installed locally for embeddings only
-- ✅ PDF files in the project root
-- ✅ **Internet connection** (for Ollama Cloud access)
+- ✅ Docker installed and running (for Qdrant)
+- ✅ Ollama installed (for embeddings)
+- ✅ Dependencies installed: `pip install -r requirements.txt`
+- ✅ **Groq API key** set in `.env` file
 
-## 🔧 Step 1: Start Required Services
+### 🔑 Get Your Free Groq API Key (REQUIRED!)
 
-### 1.1 Start Ollama (for Embeddings ONLY)
+1. Visit: https://console.groq.com/keys
+2. Sign up (it's FREE!)
+3. Create an API key
+4. Add to `.env` file:
+   ```env
+   GROQ_API_KEY=gsk_your_actual_key_here
+   ```
 
-**You only need Ollama for embeddings. The LLM (answer generation) runs on Ollama Cloud!**
+---
 
-**Windows:**
+## 🛠️ Step 1: Start Required Services
+
+### 1.1 Start Qdrant (Vector Database)
+
+**Terminal 1:**
 ```bash
-# Ollama should start automatically
-# Verify it's running:
-curl http://localhost:11434/api/version
-
-# Pull the powerful qwen3-embedding model (3.2GB):
-ollama pull qwen3-embedding
-
-# IMPORTANT: Close other memory-intensive programs to free up RAM
-# The model needs ~3.2GB of system memory
-```
-
-**Mac/Linux:**
-```bash
-# In Terminal 1:
-ollama serve
-
-# Pull the qwen3-embedding model:
-ollama pull qwen3-embedding
-```
-
-**💡 Memory Optimization Tips:**
-- Close unnecessary browser tabs and applications
-- The model loads into RAM when first used
-- After first use, embeddings are faster
-- If you still get memory errors, restart Ollama: `ollama serve`
-
-### 1.2 Start Qdrant (Vector Database)
-
-**In Terminal 1 (or run in background):**
-
-```bash
-# Navigate to project directory
 cd "c:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API"
 
-# Start Qdrant in background
 docker run -d -p 6333:6333 -p 6334:6334 -v "%cd%\qdrant_storage":/qdrant/storage qdrant/qdrant
-
-# Verify it's running
-curl http://localhost:6333/collections
 ```
 
-### 1.3 Start LLM Proxy (MUST BE RUNNING BEFORE MAIN APP!)
+### 1.2 Start Ollama (Embeddings)
 
-**⚠️ IMPORTANT: Start this BEFORE running the main application!**
-
-**In Terminal 2:**
-
+Ollama should auto-start on Windows. Verify:
 ```bash
-# Navigate to project directory
+curl http://localhost:11434/api/version
+```
+
+If not running:
+```bash
+ollama serve
+```
+
+Pull the embedding model (one-time):
+```bash
+ollama pull qwen3-embedding
+```
+
+### 1.3 Start LLM Proxy (CRITICAL - Keep Running!)
+
+**Terminal 2 (KEEP THIS OPEN!):**
+```bash
 cd "c:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API"
 
-# Start the LLM proxy (connects to Ollama Cloud)
-python start_llm_proxy_alternative.py
+python start_llm_proxy_cli.py
 ```
 
-**Expected output:**
+**Expected Output:**
 ```
 🚀 Starting LLM Proxy Server (Direct Import Method)...
 This bypasses CLI issues and works with Python 3.13

@@ -5,6 +5,7 @@ Bypasses CLI compatibility issues with Python 3.13
 
 import logging
 import sys
+import os
 from pathlib import Path
 import yaml
 
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     try:
         # Import required modules
         import uvicorn
-        from litellm.proxy.proxy_server import app, initialize
+        from litellm.proxy.proxy_server import app, ProxyConfig, initialize
         
         # Set config file path
         config_file = Path("llm_proxy_config.yaml")
@@ -36,30 +37,18 @@ if __name__ == "__main__":
         print(f"📋 Using config: {config_file.absolute()}")
         print(f"🌐 Connecting to Groq (Primary) + Ollama Cloud (Fallback)\n")
         
-        # Load config
+        # Load config to verify it's valid
         with open(config_file, 'r') as f:
-            config = yaml.safe_load(f)
+            config_data = yaml.safe_load(f)
         
-        # Initialize the proxy
         logger.info("Initializing LiteLLM proxy...")
-        initialize(
-            model=None,
-            alias=None,
-            api_base=None,
-            api_version=None,
-            debug=False,
-            temperature=None,
-            max_tokens=None,
-            request_timeout=600,
-            max_budget=None,
-            telemetry=False,
-            drop_params=True,
-            add_function_to_prompt=False,
-            headers=None,
-            save=False,
-            config=str(config_file.absolute()),
-            use_queue=False
-        )
+        
+        # Set environment variable for config file (THIS IS THE FIX!)
+        os.environ["LITELLM_CONFIG_PATH"] = str(config_file.absolute())
+        
+        # Initialize proxy with minimal parameters
+        # The config file will be loaded automatically from env var
+        proxy_config = ProxyConfig()
         
         print("\n✅ LLM Proxy initialized successfully!")
         print("   📍 Base URL: http://0.0.0.0:4000")

@@ -48,6 +48,32 @@ def check_ollama_model():
         print(f"❌ Ollama model check failed: {e}")
         return False
 
+def check_llm_proxy():
+    """Check if LLM proxy is running and ready"""
+    try:
+        # Try multiple endpoints
+        endpoints = [
+            "http://localhost:4000/health",
+            "http://localhost:4000/health/liveliness",
+            "http://0.0.0.0:4000/health"
+        ]
+        
+        for endpoint in endpoints:
+            try:
+                response = requests.get(endpoint, timeout=5)
+                if response.status_code == 200:
+                    print(f"✅ LLM Proxy is running and healthy at {endpoint}")
+                    return True
+            except requests.exceptions.ConnectionError:
+                continue
+        
+        print("❌ LLM Proxy is NOT running or not ready")
+        return False
+        
+    except Exception as e:
+        print(f"❌ LLM Proxy check failed: {e}")
+        return False
+
 def main():
     """Run all service checks"""
     print("🔍 Checking PIF RAG Chat Services...\n")
@@ -70,11 +96,12 @@ def main():
         print("   💡 Start with: docker run -d -p 6333:6333 -p 6334:6334 -v \"%cd%\\qdrant_storage\":/qdrant/storage qdrant/qdrant")
     print()
     
-    # Check LLM Proxy (answer generation) - FIXED PORT
+    # Check LLM Proxy (answer generation) - UPDATED
     print("3️⃣ Checking LLM Proxy (Answer Generation)...")
-    if not check_service("LLM Proxy", "http://localhost:4000/health"):
+    if not check_llm_proxy():
         all_ok = False
         print("   💡 Start with: python start_llm_proxy_alternative.py")
+        print("   ⏳ Wait 10-20 seconds for proxy to fully initialize")
     print()
     
     # Summary
