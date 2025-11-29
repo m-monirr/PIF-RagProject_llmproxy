@@ -135,28 +135,27 @@ class LLMProxyManager:
             logger.error(traceback.format_exc())
             return False
     
-    def _check_proxy_health(self, max_retries=3, timeout=10) -> bool:
-        """Check if proxy is healthy with retries and longer timeout"""
+    def _check_proxy_health(self, max_retries=2, timeout=5) -> bool:
+        """Check if proxy is healthy with retries and shorter timeout"""
         for attempt in range(max_retries):
             try:
-                # Only use localhost endpoint (more reliable)
                 endpoint = f"http://localhost:{self.port}/health"
                 
                 try:
                     response = requests.get(endpoint, timeout=timeout)
                     if response.status_code == 200:
-                        logger.debug(f"✅ Health check passed: {endpoint}")
+                        logger.debug(f"✅ Health check passed")
                         return True
                 except requests.exceptions.Timeout:
-                    logger.debug(f"Health check timeout for {endpoint}")
+                    logger.debug(f"Health check timeout")
                 except requests.exceptions.ConnectionError:
-                    logger.debug(f"Connection refused for {endpoint}")
+                    logger.debug(f"Connection refused")
                     
             except Exception as e:
-                logger.debug(f"Health check error (attempt {attempt + 1}/{max_retries}): {e}")
+                logger.debug(f"Health check error: {e}")
             
             if attempt < max_retries - 1:
-                time.sleep(1)
+                time.sleep(0.5)  # Reduced from 1 second
         
         return False
     
@@ -164,10 +163,10 @@ class LLMProxyManager:
         """Initialize OpenAI client for proxy"""
         try:
             self.client = openai.OpenAI(
-                api_key="dummy-key",  # LiteLLM doesn't need real key
+                api_key="dummy-key",
                 base_url=self.base_url,
-                timeout=60.0,  # Increased timeout
-                max_retries=3
+                timeout=30.0,  # Reduced from 60
+                max_retries=1  # Reduced from 3
             )
             self._is_running = True
             logger.info("✅ OpenAI client initialized for LLM proxy")
@@ -197,14 +196,8 @@ class LLMProxyManager:
             Generated answer string
         """
         if not self._is_running or not self.client:
-            logger.warning("LLM proxy client not initialized, attempting to reconnect...")
-            
-            # Try to reconnect once
-            if self._check_proxy_health(max_retries=2, timeout=5):
-                self._initialize_client()
-            else:
-                logger.error("LLM proxy not available")
-                return self._fallback_answer(question, context, is_arabic)
+            logger.warning("LLM proxy not available, using fallback")
+            return self._fallback_answer(question, context, is_arabic)
         
         try:
             # Create prompt based on language
@@ -247,29 +240,32 @@ Provide a comprehensive and accurate answer based on the context above. Use clea
             # Call LLM through proxy with timeout handling
             try:
                 response = self.client.chat.completions.create(
-                    model="rag-llm",  # This will use Groq primary + fallbacks
+                    model="rag-llm",  # Will use llama-3.1-8b-instant (Groq)
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    timeout=30.0  # Request timeout
+                    timeout=20.0  # Reduced from 30
                 )
                 
                 answer = response.choices[0].message.content.strip()
-                logger.info(f"✅ Generated answer using model: {response.model}")
+                logger.info(f"✅ Generated answer using: {response.model}")
                 return answer
                 
             except openai.APITimeoutError:
-                logger.error("API request timed out")
+                logger.error("Groq API timeout")
                 return self._fallback_answer(question, context, is_arabic)
             except openai.APIConnectionError as e:
-                logger.error(f"Connection error: {e}")
+                logger.error(f"Groq connection error: {e}")
+                return self._fallback_answer(question, context, is_arabic)
+            except openai.BadRequestError as e:
+                logger.error(f"Groq bad request: {e}")
                 return self._fallback_answer(question, context, is_arabic)
                 
         except Exception as e:
-            logger.error(f"Error generating answer with LLM: {e}")
+            logger.error(f"Error generating answer: {e}")
             return self._fallback_answer(question, context, is_arabic)
     
     def _fallback_answer(self, question: str, context: str, is_arabic: bool) -> str:
@@ -314,16 +310,14 @@ def get_llm_proxy() -> LLMProxyManager:
     if _proxy_instance is None:
         _proxy_instance = LLMProxyManager()
         
-        # Don't wait too long on first connection
-        logger.info("🔍 Checking for existing LLM proxy...")
+        # Quick health check (1 retry, 3 second timeout)
+        logger.info("🔍 Checking for LLM proxy...")
         
-        # Quick check first (2 retries, 5 second timeout)
-        if _proxy_instance._check_proxy_health(max_retries=2, timeout=5):
+        if _proxy_instance._check_proxy_health(max_retries=1, timeout=3):
             _proxy_instance._initialize_client()
-            logger.info("✅ Connected to existing LLM proxy")
+            logger.info("✅ Connected to LLM proxy")
         else:
-            logger.warning("⚠️  LLM proxy not immediately available")
-            logger.warning("   Will retry on first request")
-            # Don't fail, just log warning - will retry when needed
+            logger.warning("⚠️  LLM proxy not available - will use context fallback")
+            logger.warning("   Start proxy: python start_llm_proxy_cli.py")
             
     return _proxy_instance

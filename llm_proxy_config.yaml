@@ -1,40 +1,48 @@
 # LLM Proxy Configuration for RAG Answer Generation
-# Using Groq (Free - Super Fast!) + Ollama Cloud (Free)
+# Using Groq (Primary - FAST!) + Ollama Cloud (Fallback - FREE!)
 
 router_settings:
   enable_pre_call_checks: false
 
 model_list:
-  # Primary: Groq - llama3-8b (FREE, SUPER FAST!)
+  # Primary: Groq - llama-3.1-8b-instant (FAST & FREE!)
   - model_name: "rag-llm"
     litellm_params:
-      model: "groq/llama3-8b-8192"
+      model: "groq/llama-3.1-8b-instant"
       api_key: "os.environ/GROQ_API_KEY"
       rpm: 30
-      timeout: 60
+      timeout: 20
 
-  # Fallback 1: Ollama Cloud - qwen2.5:3b
-  - model_name: "rag-llm-ollama"
+  # Fallback 1: Ollama Cloud - qwen2.5:latest
+  - model_name: "rag-llm-ollama-1"
     litellm_params:
-      model: "ollama_chat/qwen2.5:3b"
+      model: "ollama_chat/qwen2.5:latest"
       api_base: "https://cloud.ollama.ai"
       rpm: 60
-      timeout: 60
+      timeout: 30
 
-  # Fallback 2: Ollama Cloud - llama3.2:3b
-  - model_name: "rag-llm-ollama-fallback"
+  # Fallback 2: Ollama Cloud - llama3.2:latest
+  - model_name: "rag-llm-ollama-2"
     litellm_params:
-      model: "ollama_chat/llama3.2:3b"
+      model: "ollama_chat/llama3.2:latest"
       api_base: "https://cloud.ollama.ai"
       rpm: 60
-      timeout: 60
+      timeout: 30
+
+  # Fallback 3: Groq - mixtral-8x7b-32768 (if Ollama Cloud fails)
+  - model_name: "rag-llm-groq-fallback"
+    litellm_params:
+      model: "groq/mixtral-8x7b-32768"
+      api_key: "os.environ/GROQ_API_KEY"
+      rpm: 30
+      timeout: 20
 
 litellm_settings:
-  num_retries: 2
+  num_retries: 1
   fallbacks: [
-    {"rag-llm": ["rag-llm-ollama", "rag-llm-ollama-fallback"]}
+    {"rag-llm": ["rag-llm-ollama-1", "rag-llm-ollama-2", "rag-llm-groq-fallback"]}
   ]
-  request_timeout: 60
+  request_timeout: 30
   drop_params: true
   success_callback: []
   failure_callback: []

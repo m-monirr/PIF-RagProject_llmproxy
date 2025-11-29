@@ -30,7 +30,7 @@ if __name__ == "__main__":
         input("\nPress Enter to exit...")
         sys.exit(1)
     
-    print(f"✅ Groq API key found: {groq_key[:10]}...")
+    print(f"✅ Groq API key found: {groq_key[:20]}...")
     
     config_file = Path("llm_proxy_config.yaml")
     
@@ -40,7 +40,11 @@ if __name__ == "__main__":
         sys.exit(1)
     
     print(f"📋 Using config: {config_file.absolute()}")
-    print(f"🌐 Connecting to Groq (Primary) + Ollama Cloud (Fallback)\n")
+    print(f"🌐 Multi-Provider Setup:")
+    print(f"   🥇 Primary: Groq (llama-3.1-8b-instant) - SUPER FAST!")
+    print(f"   🥈 Fallback 1: Ollama Cloud (qwen2.5:latest) - FREE!")
+    print(f"   🥉 Fallback 2: Ollama Cloud (llama3.2:latest) - FREE!")
+    print(f"   🔄 Fallback 3: Groq (mixtral-8x7b) - Powerful backup\n")
     
     # Use subprocess to call litellm CLI
     cmd = [
