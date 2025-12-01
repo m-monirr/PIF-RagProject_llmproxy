@@ -39,6 +39,8 @@ if 'show_chat' not in st.session_state:
     st.session_state.show_chat = False
 if 'last_streamed_idx' not in st.session_state:
     st.session_state.last_streamed_idx = -1
+if 'show_tips' not in st.session_state:
+    st.session_state.show_tips = False
 
 def main():
     """Main application entry point"""

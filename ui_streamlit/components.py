@@ -12,13 +12,23 @@ def render_sidebar():
     """Render the modern sidebar with all controls"""
     
     with st.sidebar:
-        # Logo and branding
+        # Logo and branding with animation - FIXED: Removed f-string to avoid CSS syntax errors
         st.markdown(f'''
-        <div style="text-align: center; padding: 20px 0;">
-            <img src="{PIF_LOGO_URL}" style="width: 140px; filter: brightness(1.5); margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">PIF Chat Assistant</h3>
-            <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9;">Powered by AI</p>
+        <div style="text-align: center; padding: 24px 0 20px 0; animation: fadeIn 0.6s ease-out;">
+            <img src="{PIF_LOGO_URL}" style="width: 150px; filter: brightness(1.5) drop-shadow(0 4px 12px rgba(0,0,0,0.3)); margin-bottom: 16px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700; letter-spacing: 1px;">PIF Chat Assistant</h3>
+            <p style="margin: 8px 0 0 0; font-size: 0.9rem; opacity: 0.85; font-weight: 500;">Powered by AI • Multi-Provider LLM</p>
         </div>
+        ''', unsafe_allow_html=True)
+        
+        # Add CSS animation separately (not in f-string)
+        st.markdown('''
+        <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        </style>
         ''', unsafe_allow_html=True)
         
         st.markdown("---")
@@ -173,6 +183,12 @@ def render_sidebar():
             unsafe_allow_html=True
         )
 
+def render_sidebar_toggle():
+    """Show helpful info about sidebar toggle (Streamlit native) - REMOVED"""
+    # Streamlit doesn't support programmatic sidebar toggle
+    # Users must use the built-in [>] arrow in top-left corner
+    pass
+
 def render_landing_page():
     """Render the landing page with hero section, stats, and features"""
     
@@ -244,12 +260,95 @@ def render_landing_page():
             st.session_state.show_chat = True
             st.rerun()
 
+def render_control_panel():
+    """Render minimal icon-based control panel with modern icons"""
+    
+    # Add spacing before control panel
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Create a clean horizontal layout (4 buttons + badge)
+    col1, col2, col3, col4, col_space, col5 = st.columns([0.4, 0.4, 0.4, 0.4, 5.5, 0.6])
+    
+    # 1. New Conversation - Clear messages but keep user
+    with col1:
+        if st.button("↻", key="ctrl_restart", help="New Conversation", use_container_width=True):
+            st.session_state.messages = []
+            st.session_state.last_streamed_idx = -1
+            st.toast("✅ Started new conversation!", icon="🔄")  # Use valid emoji
+            st.rerun()
+    
+    # 2. Debug Toggle - Show/hide debug info (FIXED)
+    with col2:
+        # Use session state to track debug mode properly
+        current_debug = st.session_state.get('debug_mode', False)
+        debug_icon = "◉" if current_debug else "○"  # Filled/empty circle
+        debug_help = "Debug: ON (hide sources)" if current_debug else "Debug: OFF (show sources)"
+        
+        if st.button(debug_icon, key="ctrl_debug", help=debug_help, use_container_width=True):
+            # Toggle debug mode in session state
+            st.session_state.debug_mode = not current_debug
+            new_status = "enabled" if st.session_state.debug_mode else "disabled"
+            st.toast(f"Debug mode {new_status}", icon="🐛" if st.session_state.debug_mode else "⚙️")  # Use valid emoji
+            st.rerun()
+    
+    # 3. Quick Tips - Show helpful tips
+    with col3:
+        if st.button("?", key="ctrl_tips", help="Quick Tips", use_container_width=True):
+            st.session_state.show_tips = not st.session_state.get('show_tips', False)
+            st.rerun()
+    
+    # 4. Logout & Exit - Complete reset and return home
+    with col4:
+        if st.button("⨯", key="ctrl_logout", help="Logout & Exit", use_container_width=True):
+            st.session_state.messages = []
+            st.session_state.user_name = None
+            st.session_state.last_streamed_idx = -1
+            st.session_state.show_chat = False
+            st.toast("👋 Logged out successfully!", icon="✖️")  # Use valid emoji
+            st.rerun()
+    
+    # 5. Message Counter Badge
+    with col5:
+        st.markdown(f"""
+        <div class="control-badge">
+            💬 {len(st.session_state.messages)}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Show tips panel if enabled
+    if st.session_state.get('show_tips', False):
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
+            border: 2px solid #00A651;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 24px rgba(0, 166, 81, 0.2);
+        ">
+            <h3 style="color: #8F7838; margin-top: 0;">💡 Quick Tips</h3>
+            <ul style="color: #CCCCCC; line-height: 1.8;">
+                <li><strong>Specific Questions:</strong> Ask about particular years, sectors, or projects</li>
+                <li><strong>Examples:</strong> "PIF's investment in NEOM 2023" or "Job creation in 2022"</li>
+                <li><strong>Arabic Support:</strong> Ask in العربية for Arabic responses</li>
+                <li><strong>Debug Mode:</strong> Enable ◉ to see source information and confidence scores</li>
+                <li><strong>Follow-ups:</strong> Click suggested questions below answers for deeper insights</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Add spacing after control panel
+    st.markdown("<br>", unsafe_allow_html=True)
+
 def render_chat_interface():
     """Render the chat interface with messages and input"""
     
-    # Chat header
-    st.markdown(f'<div class="logo-container"><img src="{PIF_LOGO_URL}" alt="PIF Logo" style="width: 150px;"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-title" style="font-size: 2rem; margin-bottom: 30px;">PIF Chat Assistant</div>', unsafe_allow_html=True)
+    # Add control panel ABOVE the chat
+    render_control_panel()
+    
+    # Chat header (smaller, less prominent)
+    st.markdown(f'<div style="text-align: center; margin-bottom: 20px;"><img src="{PIF_LOGO_URL}" alt="PIF Logo" style="width: 100px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-title" style="font-size: 1.5rem; margin-bottom: 20px;">PIF Chat Assistant</div>', unsafe_allow_html=True)
     
     # Display all messages
     render_chat_messages()

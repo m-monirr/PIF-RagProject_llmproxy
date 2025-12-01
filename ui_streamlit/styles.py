@@ -177,98 +177,212 @@ def apply_custom_css():
     
     /* Sidebar - Modern Green gradient with glassmorphism */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #00A651 0%, #007A3D 100%);
-        backdrop-filter: blur(10px);
+        background: linear-gradient(180deg, 
+            rgba(0, 166, 81, 0.95) 0%, 
+            rgba(0, 122, 61, 0.98) 50%,
+            rgba(0, 77, 37, 1) 100%
+        );
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
     }
     
     [data-testid="stSidebar"] > div:first-child {
         background: transparent;
+        padding-top: 1rem;
     }
     
-    /* Sidebar content styling */
+    /* All text white */
     [data-testid="stSidebar"] * {
         color: white !important;
     }
     
-    /* Sidebar section headers */
+    /* Section headers with elegant underline */
     [data-testid="stSidebar"] h2 {
-        font-size: 1.3rem;
-        font-weight: 600;
+        font-size: 1.4rem;
+        font-weight: 700;
         color: #FFFFFF !important;
-        margin: 24px 0 16px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        margin: 32px 0 20px 0;
+        padding-bottom: 12px;
+        border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        position: relative;
     }
     
-    /* Sidebar buttons - Modern card style */
+    [data-testid="stSidebar"] h2::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, #FFD700, #FFA500);
+        border-radius: 2px;
+    }
+    
+    /* Modern glass-morphism buttons */
     [data-testid="stSidebar"] .stButton > button {
-        background: rgba(255, 255, 255, 0.15) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
         color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        border-radius: 12px !important;
-        padding: 12px 20px !important;
-        font-weight: 500 !important;
-        transition: all 0.3s ease !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+        border-radius: 14px !important;
+        padding: 14px 20px !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Button hover effect with shimmer */
+    [data-testid="stSidebar"] .stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent
+        );
+        transition: left 0.5s;
+    }
+    
+    [data-testid="stSidebar"] .stButton > button:hover::before {
+        left: 100%;
     }
     
     [data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(255, 255, 255, 0.25) !important;
-        border-color: rgba(255, 255, 255, 0.5) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        border-color: rgba(255, 255, 255, 0.45) !important;
+        transform: translateY(-3px) scale(1.02) !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25) !important;
     }
     
-    /* Sidebar checkbox styling */
+    [data-testid="stSidebar"] .stButton > button:active {
+        transform: translateY(-1px) scale(0.98) !important;
+    }
+    
+    /* Checkbox with modern toggle style */
     [data-testid="stSidebar"] .stCheckbox {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 12px;
-        border-radius: 8px;
-        margin: 8px 0;
-    }
-    
-    /* Sidebar metrics */
-    [data-testid="stSidebar"] [data-testid="stMetric"] {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.08);
         padding: 16px;
         border-radius: 12px;
+        margin: 12px 0;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    [data-testid="stSidebar"] .stCheckbox:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.25);
+        transform: translateX(4px);
+    }
+    
+    /* Beautiful metric cards */
+    [data-testid="stSidebar"] [data-testid="stMetric"] {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 100%
+        );
+        padding: 20px;
+        border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stMetric"]:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 215, 0, 0.4);
     }
     
     [data-testid="stSidebar"] [data-testid="stMetricLabel"] {
-        color: rgba(255, 255, 255, 0.9) !important;
+        color: rgba(255, 255, 255, 0.85) !important;
         font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
     [data-testid="stSidebar"] [data-testid="stMetricValue"] {
-        color: #FFFFFF !important;
-        font-size: 1.8rem;
-        font-weight: 700;
+        color: #FFD700 !important;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
     }
     
-    /* Sidebar expander */
+    /* Elegant expander headers */
     [data-testid="stSidebar"] .streamlit-expanderHeader {
         background: rgba(255, 255, 255, 0.1) !important;
-        border-radius: 8px !important;
-        padding: 12px 16px !important;
-        font-weight: 500 !important;
+        border-radius: 12px !important;
+        padding: 14px 18px !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        transition: all 0.3s ease !important;
     }
     
     [data-testid="stSidebar"] .streamlit-expanderHeader:hover {
-        background: rgba(255, 255, 255, 0.15) !important;
+        background: rgba(255, 255, 255, 0.18) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        transform: translateX(4px);
     }
     
     [data-testid="stSidebar"] .streamlit-expanderContent {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        padding: 12px;
-        margin-top: 8px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    /* Sidebar divider */
+    /* Divider styling */
     [data-testid="stSidebar"] hr {
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        margin: 20px 0;
+        border: none !important;
+        height: 2px !important;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent
+        ) !important;
+        margin: 28px 0 !important;
+    }
+    
+    /* Success message styling */
+    [data-testid="stSidebar"] .stSuccess {
+        background: rgba(255, 215, 0, 0.15) !important;
+        border-left: 4px solid #FFD700 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Remove broken toggle button styles - Streamlit handles sidebar natively */
+    
+    /* Animation for sidebar appearance */
+    @keyframes slideInFromLeft {
+        from {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    [data-testid="stSidebar"] {
+        animation: slideInFromLeft 0.3s ease-out;
     }
     
     /* Buttons - Muted Gold accent */
@@ -303,6 +417,85 @@ def apply_custom_css():
         box-shadow: 0 0 0 3px rgba(143, 120, 56, 0.2);
     }
     
+    /* Control Panel Buttons - Clean design with modern simple icons */
+    button[key^="ctrl_"] {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        max-width: 48px !important;
+        max-height: 48px !important;
+        padding: 0 !important;
+        margin: 0 4px !important;
+        border-radius: 12px !important;
+        background: rgba(40, 44, 52, 1) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 1.8rem !important;
+        font-weight: 300 !important;
+        border: 1px solid rgba(60, 64, 72, 1) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        cursor: pointer !important;
+        line-height: 1 !important;
+    }
+    
+    button[key^="ctrl_"]:hover {
+        background: rgba(55, 59, 67, 1) !important;
+        border-color: rgba(80, 84, 92, 1) !important;
+        transform: translateY(-2px) scale(1.05) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    button[key^="ctrl_"]:active {
+        transform: translateY(0px) scale(0.95) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Specific button hover colors with modern look */
+    button[key="ctrl_restart"]:hover {
+        background: rgba(0, 166, 81, 0.25) !important;
+        border-color: rgba(0, 166, 81, 0.6) !important;
+        box-shadow: 0 4px 16px rgba(0, 166, 81, 0.4) !important;
+    }
+    
+    button[key="ctrl_debug"]:hover {
+        background: rgba(255, 152, 0, 0.25) !important;
+        border-color: rgba(255, 152, 0, 0.6) !important;
+        box-shadow: 0 4px 16px rgba(255, 152, 0, 0.4) !important;
+    }
+    
+    button[key="ctrl_tips"]:hover {
+        background: rgba(33, 150, 243, 0.25) !important;
+        border-color: rgba(33, 150, 243, 0.6) !important;
+        box-shadow: 0 4px 16px rgba(33, 150, 243, 0.4) !important;
+    }
+    
+    button[key="ctrl_logout"]:hover {
+        background: rgba(211, 47, 47, 0.25) !important;
+        border-color: rgba(211, 47, 47, 0.6) !important;
+        box-shadow: 0 4px 16px rgba(211, 47, 47, 0.4) !important;
+    }
+    
+    /* Badge styling - with emoji */
+    .control-badge {
+        background: rgba(0, 166, 81, 1) !important;
+        color: white !important;
+        padding: 10px 20px !important;
+        border-radius: 50px !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        min-width: 70px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
     /* Responsive */
     @media (max-width: 768px) {
         .hero-title {
