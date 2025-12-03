@@ -71,8 +71,8 @@ def search_multiple_collections(question: str, is_arabic: bool, limit_per_collec
     
     return unique_results[:5]  # Return top 5 unique results
 
-def generate_answer_from_context(question: str, context_chunks: List[Dict], is_arabic: bool) -> str:
-    """Generate a comprehensive answer using LLM proxy with fallback"""
+def generate_answer_from_context(question: str, context_chunks: List[Dict], is_arabic: bool, chat_history: List[Dict] = None) -> str:
+    """Generate a comprehensive answer using LLM proxy with chat history"""
     if not context_chunks:
         if is_arabic:
             return "عذراً، لم أجد معلومات محددة حول هذا السؤال في تقارير صندوق الاستثمارات العامة السنوية."
@@ -86,11 +86,12 @@ def generate_answer_from_context(question: str, context_chunks: List[Dict], is_a
     try:
         llm_proxy = get_llm_proxy()
         
-        # Generate answer using LLM with context
+        # Generate answer using LLM with context AND chat history
         answer = llm_proxy.generate_answer(
             question=question,
             context=combined_context,
             is_arabic=is_arabic,
+            chat_history=chat_history or [],  # Pass chat history
             max_tokens=500,
             temperature=0.3
         )
@@ -115,8 +116,8 @@ def generate_answer_from_context(question: str, context_chunks: List[Dict], is_a
         
         return answer
 
-def get_rag_answer(question: str) -> str:
-    """Enhanced RAG function with LLM-powered answer generation"""
+def get_rag_answer(question: str, chat_history: List[Dict] = None) -> str:
+    """Enhanced RAG function with chat history support"""
     try:
         # Detect language
         is_arabic_question = is_arabic(question)
@@ -130,8 +131,8 @@ def get_rag_answer(question: str) -> str:
             else:
                 return "I'm sorry, I couldn't find specific information about that in the PIF annual reports. You can rephrase your question or ask about a different aspect of PIF's investments."
         
-        # Generate comprehensive answer
-        answer = generate_answer_from_context(question, context_chunks, is_arabic_question)
+        # Generate comprehensive answer WITH chat history
+        answer = generate_answer_from_context(question, context_chunks, is_arabic_question, chat_history)
         
         return answer
         
@@ -142,8 +143,8 @@ def get_rag_answer(question: str) -> str:
         else:
             return "I'm sorry, there was an error processing your question. Please try again or ask a different question."
 
-def get_rag_answer_with_sources(question: str) -> Dict:
-    """Get RAG answer with source information for debugging"""
+def get_rag_answer_with_sources(question: str, chat_history: List[Dict] = None) -> Dict:
+    """Get RAG answer with source information and chat history"""
     try:
         is_arabic_question = is_arabic(question)
         context_chunks = search_multiple_collections(question, is_arabic_question)
@@ -155,7 +156,7 @@ def get_rag_answer_with_sources(question: str) -> Dict:
                 'confidence': 0.0
             }
         
-        answer = generate_answer_from_context(question, context_chunks, is_arabic_question)
+        answer = generate_answer_from_context(question, context_chunks, is_arabic_question, chat_history)
         
         return {
             'answer': answer,

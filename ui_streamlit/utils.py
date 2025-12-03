@@ -98,8 +98,12 @@ def handle_user_input(user_input):
     
     with st.spinner('🔍 Searching PIF documents...'):
         try:
+            # Prepare chat history (exclude welcome message and current question)
+            chat_history = [msg for msg in st.session_state.messages[:-1] 
+                          if msg.get('content') and not msg['content'].startswith('🎉')]
+            
             if st.session_state.debug_mode:
-                rag_result = get_rag_answer_with_sources(user_input)
+                rag_result = get_rag_answer_with_sources(user_input, chat_history=chat_history)
                 answer = rag_result['answer']
                 
                 if rag_result['sources']:
@@ -107,10 +111,11 @@ def handle_user_input(user_input):
                     debug_info += f"• Sources: {len(rag_result['sources'])}\n"
                     debug_info += f"• Confidence: {rag_result['confidence']:.2f}\n"
                     sources_str = ', '.join([f"{s['year']} ({s['score']:.2f})" for s in rag_result['sources']])
-                    debug_info += f"• Years: {sources_str}"
+                    debug_info += f"• Years: {sources_str}\n"
+                    debug_info += f"• History: {len(chat_history)} messages"
                     answer += debug_info
             else:
-                answer = get_rag_answer(user_input)
+                answer = get_rag_answer(user_input, chat_history=chat_history)
             
             if not answer or answer.strip() == "":
                 answer = "I couldn't find specific information. Please rephrase your question."

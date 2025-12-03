@@ -179,16 +179,18 @@ class LLMProxyManager:
         question: str,
         context: str,
         is_arabic: bool = False,
+        chat_history: List[Dict] = None,  # NEW: Add chat history
         max_tokens: int = 500,
         temperature: float = 0.3
     ) -> str:
         """
-        Generate answer using LLM with context from RAG
+        Generate answer using LLM with context and chat history
         
         Args:
             question: User's question
             context: Retrieved context from vector DB
             is_arabic: Whether the question is in Arabic
+            chat_history: Previous conversation messages
             max_tokens: Maximum tokens in response
             temperature: Sampling temperature
             
@@ -200,6 +202,23 @@ class LLMProxyManager:
             return self._fallback_answer(question, context, is_arabic)
         
         try:
+            # Format chat history for prompt
+            history_context = ""
+            if chat_history and len(chat_history) > 0:
+                # Only include last 4 exchanges (8 messages) to avoid token limits
+                recent_history = chat_history[-8:] if len(chat_history) > 8 else chat_history
+                
+                if is_arabic:
+                    history_context = "\n\nالمحادثة السابقة:\n"
+                    for msg in recent_history:
+                        role = "المستخدم" if msg['role'] == 'user' else "المساعد"
+                        history_context += f"{role}: {msg['content']}\n"
+                else:
+                    history_context = "\n\nPrevious conversation:\n"
+                    for msg in recent_history:
+                        role = "User" if msg['role'] == 'user' else "Assistant"
+                        history_context += f"{role}: {msg['content']}\n"
+            
             # Create prompt based on language
             if is_arabic:
                 system_prompt = """أنت مساعد ذكي متخصص في تحليل تقارير صندوق الاستثمارات العامة السعودي (PIF).
@@ -207,17 +226,19 @@ class LLMProxyManager:
 
 قواعد الإجابة:
 1. استخدم المعلومات من السياق المقدم فقط
-2. قدم إجابات واضحة ومنظمة
-3. اذكر الأرقام والإحصائيات عند توفرها
-4. إذا كانت المعلومات غير كافية، اذكر ذلك بوضوح
-5. لا تختلق معلومات غير موجودة في السياق"""
+2. راعِ المحادثة السابقة لفهم السياق الكامل
+3. قدم إجابات واضحة ومنظمة
+4. اذكر الأرقام والإحصائيات عند توفرها
+5. إذا كانت المعلومات غير كافية، اذكر ذلك بوضوح
+6. لا تختلق معلومات غير موجودة في السياق"""
 
                 user_prompt = f"""السياق من تقارير صندوق الاستثمارات العامة:
 {context}
+{history_context}
 
-السؤال: {question}
+السؤال الحالي: {question}
 
-قدم إجابة شاملة ودقيقة بناءً على السياق أعلاه. استخدم تنسيق واضح مع نقاط منظمة عند الضرورة."""
+قدم إجابة شاملة ودقيقة بناءً على السياق والمحادثة السابقة. استخدم تنسيق واضح مع نقاط منظمة عند الضرورة."""
 
             else:
                 system_prompt = """You are an intelligent assistant specialized in analyzing Saudi Arabia's Public Investment Fund (PIF) annual reports.
@@ -225,17 +246,19 @@ Your task is to provide accurate and detailed answers based on the provided cont
 
 Answer Guidelines:
 1. Use only information from the provided context
-2. Provide clear and well-structured answers
-3. Include numbers and statistics when available
-4. If information is insufficient, state it clearly
-5. Do not fabricate information not in the context"""
+2. Consider previous conversation for full context understanding
+3. Provide clear and well-structured answers
+4. Include numbers and statistics when available
+5. If information is insufficient, state it clearly
+6. Do not fabricate information not in the context"""
 
                 user_prompt = f"""Context from PIF Annual Reports:
 {context}
+{history_context}
 
-Question: {question}
+Current Question: {question}
 
-Provide a comprehensive and accurate answer based on the context above. Use clear formatting with organized bullet points when necessary."""
+Provide a comprehensive and accurate answer based on the context and previous conversation. Use clear formatting with organized bullet points when necessary."""
 
             # Call LLM through proxy with timeout handling
             try:
@@ -247,7 +270,7 @@ Provide a comprehensive and accurate answer based on the context above. Use clea
                     ],
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    timeout=20.0  # Reduced from 30
+                    timeout=20.0
                 )
                 
                 answer = response.choices[0].message.content.strip()
