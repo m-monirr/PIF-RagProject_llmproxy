@@ -72,13 +72,13 @@ def apply_custom_css():
         padding: 30px;
         text-align: center;
         min-width: 250px;
-        box-shadow: 0 8px 24px rgba(0, 166, 81, 0.2);
+        box-shadow: 0 8px 24px rgba(0,166,81,0.2);
         transition: all 0.3s ease;
     }
     
     .stat-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 16px 48px rgba(143, 120, 56, 0.3);
+        box-shadow: 0 16px 48px rgba(143,120,56,0.3);
         border-color: #8F7838;
     }
     
@@ -115,13 +115,13 @@ def apply_custom_css():
         border: 1px solid #00A651;
         border-radius: 16px;
         padding: 30px;
-        box-shadow: 0 4px 16px rgba(0, 166, 81, 0.15);
+        box-shadow: 0 4px 16px rgba(0,166,81,0.15);
         transition: all 0.3s ease;
     }
     
     .feature-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 12px 32px rgba(143, 120, 56, 0.25);
+        box-shadow: 0 12px 32px rgba(143,120,56,0.25);
         border-color: #8F7838;
     }
     

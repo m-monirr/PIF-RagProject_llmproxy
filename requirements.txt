@@ -9,6 +9,9 @@ docling-core>=0.8.0
 # Ollama for local embeddings
 ollama>=0.1.0
 
+# HTTP requests for service checks
+requests>=2.31.0
+
 # Environment variables
 python-dotenv>=1.0.0
 

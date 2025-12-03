@@ -20,7 +20,8 @@ LLM_PROXY_BASE_URL = "http://localhost:4000"
 class LLMProxyManager:
     """Manages LiteLLM proxy for answer generation with fallback support"""
     
-    def __init__(self, config_path: str = "llm_proxy_config.yaml", port: int = 4000):
+    def __init__(self, config_path: str = "config/llm_proxy_config.yaml", port: int = 4000):
+        # Updated config path to new location
         self.config_path = Path(config_path)
         self.port = port
         self.base_url = f"http://localhost:{port}"  # Use localhost instead of 0.0.0.0
@@ -341,6 +342,6 @@ def get_llm_proxy() -> LLMProxyManager:
             logger.info("✅ Connected to LLM proxy")
         else:
             logger.warning("⚠️  LLM proxy not available - will use context fallback")
-            logger.warning("   Start proxy: python start_llm_proxy_cli.py")
+            logger.warning("   Start proxy: python scripts/start_llm_proxy.py")  # Fixed path
             
     return _proxy_instance

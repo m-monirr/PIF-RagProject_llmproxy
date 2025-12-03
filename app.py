@@ -1,16 +1,16 @@
 """
 PIF RAG Chat - Streamlit Application
-Clean, modular interface using ui_streamlit package
+Clean, modular interface using src.ui package
 """
 
 import streamlit as st
-from ui_streamlit.styles import apply_custom_css
-from ui_streamlit.components import (
+from src.ui.styles import apply_custom_css
+from src.ui.components import (
     render_sidebar,
     render_landing_page,
     render_chat_interface
 )
-from ui_streamlit.utils import (
+from src.ui.utils import (
     extract_name_from_input,
     validate_question_input,
     generate_follow_up_questions,

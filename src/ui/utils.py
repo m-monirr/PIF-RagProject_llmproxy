@@ -6,7 +6,7 @@ All business logic and helper functions
 import streamlit as st
 import time
 import re
-from api_code.rag_query import get_rag_answer, get_rag_answer_with_sources
+from src.retrieval.rag_query import get_rag_answer, get_rag_answer_with_sources
 
 def extract_name_from_input(user_input):
     """Extract name from user input"""

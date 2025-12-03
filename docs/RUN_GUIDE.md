@@ -1,79 +1,56 @@
 # 🚀 Running PIF RAG Chat - QUICK START
 
-## ⚡ Quick Start (Easiest Way)
+## ⚡ Quick Start (Step-by-Step)
 
-### Windows Users - Double-click to start:
+### Step 1: Check All Services
 
-```batch
-START_HERE.bat
-```
-
-This will:
-1. ✅ Check all services
-2. 🚀 Start LLM Proxy in a separate window
-3. 🌐 Launch Streamlit app automatically
-
-**That's it!** Your browser will open automatically.
-
----
-
-## 📋 Manual Start (Step-by-Step)
-
-### Prerequisites Checklist
-
-- ✅ Python 3.8+ installed
-- ✅ Docker installed and running (for Qdrant)
-- ✅ Ollama installed (for embeddings)
-- ✅ Dependencies installed: `pip install -r requirements.txt`
-- ✅ **Groq API key** set in `.env` file
-
-### 🔑 Get Your Free Groq API Key (REQUIRED!)
-
-1. Visit: https://console.groq.com/keys
-2. Sign up (it's FREE!)
-3. Create an API key
-4. Add to `.env` file:
-   ```env
-   GROQ_API_KEY=gsk_your_actual_key_here
-   ```
-
----
-
-## 🛠️ Step 1: Start Required Services
-
-### 1.1 Start Qdrant (Vector Database)
-
-**Terminal 1:**
 ```bash
-cd "c:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API"
-
-docker run -d -p 6333:6333 -p 6334:6334 -v "%cd%\qdrant_storage":/qdrant/storage qdrant/qdrant
+python scripts/check_services.py
 ```
 
-### 1.2 Start Ollama (Embeddings)
+This will tell you what's running and what needs to be started.
 
-Ollama should auto-start on Windows. Verify:
+### Step 2: Start Qdrant (if not running)
+
 ```bash
-curl http://localhost:11434/api/version
+python scripts/start_qdrant.py
 ```
 
-If not running:
+Expected output:
+```
+Qdrant is already running.
+```
+
+If not running, it will start Qdrant and show:
+```
+Starting Qdrant...
+Qdrant started successfully.
+```
+
+### Step 3: Start Ollama (if not running)
+
 ```bash
-ollama serve
+python scripts/start_ollama.py
 ```
 
-Pull the embedding model (one-time):
-```bash
-ollama pull qwen3-embedding
+Expected output:
+```
+Ollama is already running.
 ```
 
-### 1.3 Start LLM Proxy (CRITICAL - Keep Running!)
+If not running, it will start Ollama and show:
+```
+Starting Ollama...
+Ollama started successfully.
+```
+
+### Step 4: Start LLM Proxy (CRITICAL - Keep Running!)
 
 **Terminal 2 (KEEP THIS OPEN!):**
 ```bash
 cd "c:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API"
 
-python start_llm_proxy_cli.py
+python scripts/start_llm_proxy.py
 ```
 
 **Expected Output:**
@@ -101,16 +78,14 @@ INFO:     Uvicorn running on http://0.0.0.0:4000 (Press CTRL+C to quit)
 
 ## 📊 Step 2: Process Documents (First Time Only)
 
-**⚠️ Make sure LLM Proxy is running first!**
-
-**In Terminal 3:**
+**Terminal 3:**
 
 ```bash
 # Navigate to project directory
 cd "c:\Users\Mohamed\Desktop\ai career\pif-rag\project-v2\API"
 
-# Process PDFs and create embeddings
-python -m api_code.main
+# Process PDFs and create embeddings (updated path)
+python scripts/process_documents.py
 ```
 
 **This will:**

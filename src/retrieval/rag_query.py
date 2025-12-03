@@ -1,7 +1,7 @@
 from pathlib import Path
-from api_code.config import year_to_filename_ar, year_to_filename_en
-from api_code.embedding import embed_query
-from api_code.llm_proxy import get_llm_proxy
+from src.core.config import year_to_filename_ar, year_to_filename_en
+from src.core.embedding import embed_query
+from src.llm.llm_proxy import get_llm_proxy
 from qdrant_client import QdrantClient
 import re
 import json
