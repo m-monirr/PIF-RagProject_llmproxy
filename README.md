@@ -2,6 +2,171 @@
 
 An intelligent chatbot for exploring Saudi Arabia's Public Investment Fund (PIF) annual reports using Retrieval-Augmented Generation (RAG).
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)](https://streamlit.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph "User Interface Layer"
+        UI[Streamlit Web App<br/>Port: 8080]
+        CSS[Custom CSS Styling<br/>PIF Theme]
+    end
+
+    subgraph "Application Layer"
+        CHAT[Chat Components<br/>src/ui/components.py]
+        UTILS[UI Utilities<br/>src/ui/utils.py]
+    end
+
+    subgraph "RAG Pipeline"
+        QUERY[Query Processing<br/>src/retrieval/rag_query.py]
+        EMBED[Embeddings<br/>Ollama qwen3-embedding]
+        SEARCH[Vector Search<br/>Qdrant Client]
+        LLM[Answer Generation<br/>LiteLLM Proxy]
+    end
+
+    subgraph "External Services"
+        OLLAMA[Ollama Server<br/>localhost:11434<br/>4096-dim embeddings]
+        QDRANT[Qdrant Vector DB<br/>localhost:6333<br/>Docker Container]
+        GROQ[Groq API<br/>llama-3.1-8b-instant<br/>Primary LLM]
+        OLLAMA_CLOUD[Ollama Cloud<br/>qwen2.5:3b, llama3.2:3b<br/>Fallback LLMs]
+    end
+
+    subgraph "Data Processing"
+        PDF[PDF Documents<br/>data/pdfs/]
+        EXTRACT[Extraction<br/>Docling + OCR]
+        CHUNK[Chunking<br/>HybridChunker]
+        EMBED_PROC[Embedding Generation<br/>Batch Processing]
+        UPLOAD[Vector Upload<br/>Qdrant Collections]
+    end
+
+    subgraph "Storage"
+        STORAGE[Qdrant Storage<br/>data/qdrant_storage/]
+        OUTPUT[Processed Outputs<br/>data/outputs/]
+    end
+
+    UI --> CHAT
+    UI --> CSS
+    CHAT --> UTILS
+    UTILS --> QUERY
+    QUERY --> EMBED
+    QUERY --> LLM
+    EMBED --> OLLAMA
+    QUERY --> SEARCH
+    SEARCH --> QDRANT
+    LLM --> GROQ
+    LLM -.Fallback.-> OLLAMA_CLOUD
+    
+    PDF --> EXTRACT
+    EXTRACT --> CHUNK
+    CHUNK --> EMBED_PROC
+    EMBED_PROC --> OLLAMA
+    EMBED_PROC --> UPLOAD
+    UPLOAD --> QDRANT
+    QDRANT --> STORAGE
+    EXTRACT --> OUTPUT
+
+    style UI fill:#00A651,stroke:#333,stroke-width:2px,color:#fff
+    style GROQ fill:#8F7838,stroke:#333,stroke-width:2px,color:#fff
+    style OLLAMA fill:#0066cc,stroke:#333,stroke-width:2px,color:#fff
+    style QDRANT fill:#cc0066,stroke:#333,stroke-width:2px,color:#fff
+```
+
+---
+
+## 📊 Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DOCUMENT PROCESSING                          │
+└─────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────┐
+                    │  PDF Files (2021-2023)   │
+                    │  English + Arabic        │
+                    └──────────────────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────┐
+                    │  Docling Extraction      │
+                    │  • Text + Tables         │
+                    │  • OCR Support           │
+                    │  • Structure Preservation│
+                    └──────────────────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────┐
+                    │  HybridChunker           │
+                    │  • Semantic Chunks       │
+                    │  • Context Preservation  │
+                    │  • Max 8192 tokens       │
+                    └──────────────────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────┐
+                    │  Ollama Embeddings       │
+                    │  • qwen3-embedding       │
+                    │  • 4096 dimensions       │
+                    │  • Batch processing      │
+                    └──────────────────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────┐
+                    │  Qdrant Vector DB        │
+                    │  • 6 Collections         │
+                    │  • Cosine Similarity     │
+                    │  • Persistent Storage    │
+                    └──────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                           QUERY FLOW                                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+   User Question (English/Arabic)
+            │
+            ▼
+   ┌────────────────────┐
+   │ Language Detection │
+   └────────────────────┘
+            │
+            ▼
+   ┌────────────────────┐
+   │ Query Embedding    │
+   │ (Ollama)           │
+   └────────────────────┘
+            │
+            ▼
+   ┌────────────────────┐
+   │ Multi-Collection   │
+   │ Vector Search      │
+   │ (Top 5 per year)   │
+   └────────────────────┘
+            │
+            ▼
+   ┌────────────────────┐
+   │ Context Ranking    │
+   │ & Deduplication    │
+   └────────────────────┘
+            │
+            ▼
+   ┌────────────────────┐
+   │ LLM Generation     │
+   │ • Groq (Primary)   │
+   │ • Ollama (Fallback)│
+   │ • Chat History     │
+   └────────────────────┘
+            │
+            ▼
+   Formatted Answer + Follow-ups
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -46,51 +211,84 @@ An intelligent chatbot for exploring Saudi Arabia's Public Investment Fund (PIF)
 │       └── utils.py       # UI helper functions
 │
 ├── 📁 scripts/             # Utility scripts
+│   ├── start_qdrant.py        # Qdrant Docker launcher
 │   ├── start_llm_proxy.py     # LLM proxy launcher
+│   ├── check_services.py      # Service health check
 │   ├── run_streamlit.py       # Streamlit launcher
 │   ├── process_documents.py   # PDF processing pipeline
 │   └── cleanup_old_structure.py # Migration cleanup tool
 │
 ├── 📁 docs/                # Documentation
-│   └── RUN_GUIDE.md       # Detailed setup & troubleshooting guide
+│   ├── RUN_GUIDE.md       # Detailed setup & troubleshooting guide
+│   └── ARCHITECTURE.md    # System architecture details
 │
 ├── app.py                  # Main Streamlit application entry point
-└── requirements.txt        # Python dependencies
+├── requirements.txt        # Python dependencies
+├── QUICK_START.md         # Quick start guide
+├── START_ALL.bat          # Windows startup script
+└── README.md              # This file
 ```
+
+---
+
+## 🔧 Component Details
+
+### Core Components
+
+| Component | Technology | Purpose | Port |
+|-----------|-----------|---------|------|
+| **Streamlit UI** | Python/Streamlit | Web interface | 8080 |
+| **Ollama** | Local Server | Embeddings (qwen3-embedding) | 11434 |
+| **Qdrant** | Docker Container | Vector database | 6333 |
+| **LLM Proxy** | LiteLLM | Multi-provider LLM routing | 4000 |
+| **Groq API** | Cloud Service | Primary LLM (llama-3.1-8b) | External |
+| **Ollama Cloud** | Cloud Service | Fallback LLMs | External |
+
+### Data Collections
+
+| Collection Name | Language | Year | Documents |
+|-----------------|----------|------|-----------|
+| `PIF Annual Report 2021_collection` | English | 2021 | ~200-300 chunks |
+| `PIF Annual Report 2022_collection` | English | 2022 | ~200-300 chunks |
+| `PIF-2023-Annual-Report-EN_collection` | English | 2023 | ~200-300 chunks |
+| `PIF Annual Report 2021-ar_collection` | Arabic | 2021 | ~200-300 chunks |
+| `PIF Annual Report 2022-ar_collection` | Arabic | 2022 | ~200-300 chunks |
+| `PIF-2023-Annual-Report-AR_collection` | Arabic | 2023 | ~200-300 chunks |
+
+---
 
 ## ✨ Key Features
 
 ### 📚 Document Processing & Knowledge Extraction
 
-- **🔍 Advanced PDF Extraction**: Automatically extracts text, tables, and images from PIF annual reports using Docling with OCR support
-- **🌐 Bilingual Support**: Seamlessly processes both English and Arabic documents with intelligent language detection
-- **🧩 Smart Chunking**: Divides documents into meaningful semantic chunks using HybridChunker with context preservation
-- **🧠 High-Quality Embeddings**: Converts text chunks into 4096-dimensional vectors using Ollama's qwen3-embedding model
+- **🔍 Advanced PDF Extraction**: Docling with OCR support for text, tables, and images
+- **🌐 Bilingual Support**: Seamless processing of English and Arabic documents
+- **🧩 Smart Chunking**: HybridChunker with context preservation (max 8192 tokens)
+- **🧠 High-Quality Embeddings**: 4096-dimensional vectors via qwen3-embedding
 
 ### 🔎 Vector Search & Retrieval
 
-- **💡 Semantic Search**: Finds relevant information using vector similarity (cosine distance) in Qdrant
-- **📊 Multi-Year Search**: Intelligently searches across 2021-2023 reports for comprehensive answers
-- **📅 Year-Specific Filtering**: Automatically prioritizes year-specific information when detected in queries
-- **🎯 Confidence Scoring**: Returns relevance scores and source attribution for transparency
+- **💡 Semantic Search**: Cosine similarity search across all collections
+- **📊 Multi-Year Coverage**: Searches 2021-2023 reports simultaneously
+- **📅 Smart Filtering**: Automatic year detection and prioritization
+- **🎯 Confidence Scoring**: Relevance scores (0.3+ threshold) with source attribution
 
 ### 💬 Chat Interface & User Experience
 
-- **🎨 Modern Streamlit UI**: Clean, responsive design with Saudi-themed styling (green & gold colors)
-- **👤 Personalized Conversations**: Remembers user name and maintains conversation context
-- **❓ Smart Follow-Ups**: Generates contextual follow-up questions based on chat history
-- **⌨️ Streaming Responses**: Real-time word-by-word streaming for natural interaction
-- **📋 Copy Functionality**: Easy copy-to-clipboard for any message
-- **🇸🇦 Full Arabic Support**: Works seamlessly with both English and Arabic queries
-- **🐛 Debug Mode**: Optional display of sources, confidence scores, and retrieval details
+- **🎨 Modern UI**: PIF-themed Streamlit interface (green, gold, black)
+- **👤 Personalization**: Name recognition and conversation context
+- **❓ Follow-Up Questions**: Contextual suggestions after each answer
+- **⌨️ Real-Time Streaming**: Word-by-word answer generation
+- **🇸🇦 Full Bilingual**: English and Arabic query support
 
 ### ✍️ Answer Generation
 
-- **🤖 Multi-Provider LLM**: Uses Groq (primary) with automatic fallback to Ollama Cloud
-- **📝 Context-Aware Answers**: Generates comprehensive answers based on retrieved contexts AND chat history
-- **📑 Source Attribution**: Transparently cites years and sources for all information
-- **📊 Well-Formatted Output**: Structured responses with headings, bullet points, and clear organization
-- **🔄 Fallback Mechanism**: Gracefully degrades to context-based answers if LLM is unavailable
+- **🤖 Multi-Provider**: Groq (primary) → Ollama Cloud (fallback)
+- **📝 Context-Aware**: Uses retrieved context + chat history
+- **📑 Source Citations**: Transparent year and source attribution
+- **🔄 Graceful Degradation**: Falls back to context snippets if LLM unavailable
+
+---
 
 ## 🛠️ Installation & Setup
 
@@ -367,35 +565,85 @@ docker run -d -p 6333:6333 -p 6334:6334 -v "%cd%\data\qdrant_storage":/qdrant/st
 
 For detailed troubleshooting, see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md)
 
-## 🏗️ Tech Stack
-
-### Frontend
-- **Streamlit** - Modern Python web framework
-- **Custom CSS** - PIF-themed styling (green, gold, black)
-
-### Backend
-- **Qdrant** - High-performance vector database
-- **Ollama** - Local embeddings (qwen3-embedding, 4096-dim)
-- **LiteLLM** - Multi-provider LLM routing
-- **Docling** - PDF extraction and processing
-
-### LLM Providers
-- **Groq** - Primary (llama-3.1-8b-instant) - FREE & FAST
-- **Ollama Cloud** - Fallback (qwen2.5:3b, llama3.2:3b)
-
 ## 📊 Performance Metrics
 
-- **Query Response Time**: ~1-2 seconds (including LLM generation)
-- **Embedding Throughput**: ~20-30 texts/second (local Ollama)
-- **Retrieval Precision**: 92%+ relevant document retrieval
-- **Multi-Year Coverage**: 3 years of PIF annual reports (2021-2023)
+| Metric | Value |
+|--------|-------|
+| **Query Response Time** | 1-2 seconds |
+| **Embedding Speed** | 20-30 texts/second |
+| **Retrieval Precision** | 92%+ |
+| **Vector Dimension** | 4096 |
+| **Collections** | 6 (3 EN + 3 AR) |
+| **Years Covered** | 2021-2023 |
+| **Supported Languages** | English + Arabic |
+
+---
+
+## 🔍 Technical Stack
+
+### Frontend Layer
+```
+Streamlit 1.28+ → Custom CSS (PIF Theme) → Responsive Design
+```
+
+### Application Layer
+```
+Python 3.8+ → Modular Components → Session State Management
+```
+
+### RAG Pipeline
+```
+Query → Embedding → Vector Search → Context Ranking → LLM → Answer
+```
+
+### Storage Layer
+```
+Qdrant Vector DB (Cosine) + Docker Persistence
+```
+
+### LLM Providers
+```
+Primary: Groq (llama-3.1-8b-instant) - FREE
+Fallback 1: Ollama Cloud (qwen2.5:3b)
+Fallback 2: Ollama Cloud (llama3.2:3b)
+```
+
+---
+
+## 🚦 Service Dependencies
+
+```mermaid
+graph LR
+    A[Streamlit App] --> B[LLM Proxy]
+    A --> C[Qdrant]
+    A --> D[Ollama]
+    B --> E[Groq API]
+    B -.-> F[Ollama Cloud]
+    
+    style A fill:#00A651,stroke:#333,stroke-width:2px,color:#fff
+    style E fill:#8F7838,stroke:#333,stroke-width:2px,color:#fff
+    style F fill:#8F7838,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#cc0066,stroke:#333,stroke-width:2px,color:#fff
+    style D fill:#0066cc,stroke:#333,stroke-width:2px,color:#fff
+```
+
+**Startup Order:**
+1. ✅ Qdrant (Vector DB)
+2. ✅ Ollama (Embeddings)
+3. ✅ LLM Proxy (Answer Generation)
+4. ✅ Streamlit App
+
+---
 
 ## 📖 Documentation
 
-- **[RUN_GUIDE.md](docs/RUN_GUIDE.md)** - Complete setup, troubleshooting, and usage guide
-- **[Config Reference](config/README.md)** - Configuration options explained (TODO)
+- **[QUICK_START.md](QUICK_START.md)** - 5-minute quick start guide
+- **[RUN_GUIDE.md](docs/RUN_GUIDE.md)** - Complete setup & troubleshooting
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Detailed system architecture
 
-## 👥 Contributing
+---
+
+## 🤝 Contributing
 
 Contributions welcome! Please:
 
@@ -405,27 +653,61 @@ Contributions welcome! Please:
 4. Push to branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 🚀 Future Roadmap
+---
 
-- [ ] **Multi-document Support**: Extend to other document types (press releases, reports)
-- [ ] **REST API**: Headless API endpoints for integration
-- [ ] **Voice Interface**: Speech recognition and text-to-speech
-- [ ] **Enhanced Analytics**: Track usage patterns and question types
-- [ ] **Fine-tuned Models**: Domain-specific embedding models for finance/investment
-- [ ] **Authentication**: User accounts and personalized history
-- [ ] **Export Features**: Save conversations as PDF/Markdown
-- [ ] **Real-time Data**: Integrate live financial data sources
-- [ ] **More Languages**: Expand beyond English and Arabic
+## 🚀 Roadmap
 
-## 📞 Support & Contact
-
-- **Issues**: https://github.com/m-monirr/PIF-Annual-Report_RagProject/issues
-- **Discussions**: https://github.com/m-monirr/PIF-Annual-Report_RagProject/discussions
-
-## 📝 License
-
-MIT License - See LICENSE file for details
+- [ ] Multi-document support (press releases, financial statements)
+- [ ] REST API endpoints
+- [ ] Voice interface (speech-to-text)
+- [ ] Usage analytics dashboard
+- [ ] Fine-tuned domain-specific models
+- [ ] User authentication
+- [ ] Conversation export (PDF/Markdown)
+- [ ] Real-time data integration
+- [ ] Additional languages (French, Spanish)
 
 ---
 
-**Made with ❤️ for exploring PIF's transformative investments in Saudi Arabia's future**
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/m-monirr/PIF-Annual-Report_RagProject/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/m-monirr/PIF-Annual-Report_RagProject/discussions)
+
+---
+
+## 📝 License
+
+MIT License - See [LICENSE](LICENSE) file for details
+
+---
+
+## 🙏 Acknowledgments
+
+- **Saudi Arabia's PIF** - For public investment data
+- **Docling** - PDF extraction framework
+- **Qdrant** - High-performance vector database
+- **Ollama** - Local embedding models
+- **Groq** - Fast LLM inference
+- **Streamlit** - Modern Python web framework
+
+---
+
+**Made with ❤️ for exploring PIF's transformative investments in Saudi Arabia's future** 🇸🇦
+
+---
+
+## 📸 Screenshots
+
+### Landing Page
+![Landing Page](docs/screenshots/landing.png)
+
+### Chat Interface
+![Chat Interface](docs/screenshots/chat.png)
+
+### Debug Mode
+![Debug Mode](docs/screenshots/debug.png)
+
+---
+
+**⭐ Star this repo if you find it useful!**
