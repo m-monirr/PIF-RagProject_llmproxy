@@ -594,10 +594,6 @@ MIT License - See [LICENSE](LICENSE) file for details
 - **Groq** - Fast LLM inference
 - **Streamlit** - Modern Python web framework
 
----
-
-### Debug Mode
-![Debug Mode](docs/screenshots/debug.png)
 
 ---
 
