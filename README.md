@@ -579,13 +579,6 @@ Contributions welcome! Please:
 
 ---
 
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/m-monirr/PIF-Annual-Report_RagProject/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/m-monirr/PIF-Annual-Report_RagProject/discussions)
-
----
-
 ## 📝 License
 
 MIT License - See [LICENSE](LICENSE) file for details
@@ -602,18 +595,6 @@ MIT License - See [LICENSE](LICENSE) file for details
 - **Streamlit** - Modern Python web framework
 
 ---
-
-**Made with ❤️ for exploring PIF's transformative investments in Saudi Arabia's future** 🇸🇦
-
----
-
-## 📸 Screenshots
-
-### Landing Page
-![Landing Page](docs/screenshots/landing.png)
-
-### Chat Interface
-![Chat Interface](docs/screenshots/chat.png)
 
 ### Debug Mode
 ![Debug Mode](docs/screenshots/debug.png)
