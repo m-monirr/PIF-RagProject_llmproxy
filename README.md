@@ -579,12 +579,6 @@ Contributions welcome! Please:
 
 ---
 
-## 📝 License
-
-MIT License - See [LICENSE](LICENSE) file for details
-
----
-
 ## 🙏 Acknowledgments
 
 - **Saudi Arabia's PIF** - For public investment data
