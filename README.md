@@ -563,6 +563,32 @@ docker ps
 docker run -d -p 6333:6333 -p 6334:6334 -v "%cd%\data\qdrant_storage":/qdrant/storage qdrant/qdrant
 ```
 
+### Common Errors
+
+**Error: "GROQ_API_KEY not set"**
+```bash
+# Solution: Add your API key to config/.env
+GROQ_API_KEY=gsk_your_actual_key_here
+```
+
+**Error: "ModuleNotFoundError: No module named 'psutil'"**
+```bash
+# Solution: Install missing dependency
+pip install psutil>=5.9.0
+```
+
+**Error: "Connection refused to Qdrant"**
+```bash
+# Solution: Start Qdrant Docker container
+python scripts/start_qdrant.py
+```
+
+**Error: "Ollama model not found"**
+```bash
+# Solution: Pull the embedding model
+ollama pull qwen3-embedding
+```
+
 For detailed troubleshooting, see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md)
 
 ## 📊 Performance Metrics

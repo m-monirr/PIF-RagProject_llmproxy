@@ -24,6 +24,9 @@ uuid>=1.30
 tqdm>=4.65.0
 numpy>=1.24.0
 
+# Process management (for LLM proxy cleanup)
+psutil>=5.9.0
+
 # LLM Proxy for answer generation with fallback
 litellm[proxy]>=1.55.0
 openai>=1.42.0

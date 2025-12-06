@@ -1,5 +1,12 @@
-# Configuration constants for the pipeline
+from pathlib import Path
+from dotenv import load_dotenv
 import os
+
+# CRITICAL: Load environment variables from config/.env
+env_path = Path(__file__).parent.parent.parent / "config" / ".env"
+load_dotenv(dotenv_path=env_path)
+
+# Configuration constants for the pipeline
 
 # Ollama Embedding Configuration - LOCAL SETUP
 EMBEDDING_PROVIDER = "ollama"  # Using local Ollama

@@ -6,14 +6,18 @@ Handles Groq + Ollama Cloud integration with fallback mechanisms
 import logging
 import openai
 from typing import Optional, Dict, List
-from pathlib import Path
 import subprocess
 import time
 import requests
-import sys
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+
+# CRITICAL: Load environment variables before starting proxy
+env_path = Path(__file__).parent.parent.parent / "config" / ".env"
+load_dotenv(dotenv_path=env_path)
 
 LLM_PROXY_BASE_URL = "http://localhost:4000"
 
@@ -21,58 +25,49 @@ class LLMProxyManager:
     """Manages LiteLLM proxy for answer generation with fallback support"""
     
     def __init__(self, config_path: str = "config/llm_proxy_config.yaml", port: int = 4000):
-        # Updated config path to new location
         self.config_path = Path(config_path)
         self.port = port
-        self.base_url = f"http://localhost:{port}"  # Use localhost instead of 0.0.0.0
+        self.base_url = f"http://localhost:{port}"
         self.client: Optional[openai.OpenAI] = None
         self.proxy_process = None
-        self._is_running = False
+        self._proxy_pid = None  # Track our own process only
         
     def _kill_existing_processes(self):
-        """Kill any existing litellm processes"""
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmdline = proc.info.get('cmdline')
-                    if cmdline and any('litellm' in str(arg).lower() for arg in cmdline):
-                        logger.info(f"Killing existing litellm process (PID: {proc.pid})")
-                        proc.kill()
-                        proc.wait(timeout=3)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-        except ImportError:
-            logger.warning("psutil not installed, skipping process cleanup")
-        except Exception as e:
-            logger.warning(f"Error killing existing processes: {e}")
+        """Kill only OUR litellm process (safer approach)"""
+        if self._proxy_pid:
+            try:
+                import psutil
+                proc = psutil.Process(self._proxy_pid)
+                logger.info(f"Killing our litellm process (PID: {self._proxy_pid})")
+                proc.kill()
+                proc.wait(timeout=3)
+                self._proxy_pid = None
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            except Exception as e:
+                logger.warning(f"Error killing process: {e}")
         
-        time.sleep(2)
+        time.sleep(1)  # Brief wait
     
     def start_proxy(self) -> bool:
-        """Start LiteLLM proxy server"""
+        """Start LiteLLM proxy server with fast startup (max 10s)"""
         try:
-            # Check if already running
-            if self._check_proxy_health():
+            # Quick health check (1 retry, 2s timeout)
+            if self._check_proxy_health(max_retries=1, timeout=2):
                 logger.info(f"✅ LLM proxy already running on port {self.port}")
                 self._initialize_client()
                 return True
             
-            # Check if config file exists
             if not self.config_path.exists():
                 logger.error(f"Config file not found: {self.config_path}")
-                logger.error(f"Please ensure {self.config_path} exists in the project root")
                 return False
             
-            # Kill any existing processes
+            # Kill our old process if exists
             self._kill_existing_processes()
             
-            # Start proxy
             logger.info(f"🚀 Starting LLM proxy on port {self.port}...")
             logger.info(f"📋 Using config: {self.config_path.absolute()}")
-            logger.info(f"🌐 Connecting to Groq + Ollama Cloud")
             
-            # Use 'litellm' directly instead of 'python -m litellm'
             cmd = [
                 "litellm",
                 "--port", str(self.port),
@@ -81,7 +76,7 @@ class LLMProxyManager:
             
             logger.info(f"Running command: {' '.join(cmd)}")
             
-            # Start process
+            # Start process and track PID
             self.proxy_process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -89,42 +84,38 @@ class LLMProxyManager:
                 text=True,
                 bufsize=1
             )
+            self._proxy_pid = self.proxy_process.pid
             
-            # Wait for proxy to be ready
-            logger.info("⏳ Waiting for proxy to start (this may take 20-30 seconds)...")
-            max_retries = 20
+            # FAST STARTUP: Max 10 seconds (5 retries × 2 seconds)
+            logger.info("⏳ Waiting for proxy to start (max 10 seconds)...")
+            max_retries = 5  # Reduced from 20
             for i in range(max_retries):
                 # Check if process died
                 if self.proxy_process.poll() is not None:
                     stdout, stderr = self.proxy_process.communicate()
                     logger.error(f"❌ Proxy process died")
-                    logger.error(f"STDOUT:\n{stdout}")
-                    logger.error(f"STDERR:\n{stderr}")
+                    logger.error(f"STDERR:\n{stderr[:500]}")
                     return False
                 
                 time.sleep(2)
                 
-                if self._check_proxy_health():
-                    logger.info(f"✅ LLM proxy started successfully!")
+                if self._check_proxy_health(max_retries=1, timeout=2):
+                    logger.info(f"✅ LLM proxy started successfully in {(i+1)*2}s!")
                     logger.info(f"   📍 Base URL: {self.base_url}")
                     logger.info(f"   🤖 Primary: Groq (llama3-8b)")
                     logger.info(f"   🔄 Fallbacks: Ollama Cloud models")
                     self._initialize_client()
                     return True
                 
-                if i % 5 == 0 and i > 0:
-                    logger.info(f"   Still waiting... ({i*2}/{max_retries*2}s)")
-                
-            logger.error("❌ Failed to start LLM proxy - timeout after 40 seconds")
+                if i == max_retries - 1:
+                    logger.error("❌ Startup timeout (10s)")
             
             # Get error output
             if self.proxy_process:
                 try:
                     stdout, stderr = self.proxy_process.communicate(timeout=2)
-                    if stdout:
-                        logger.error(f"STDOUT:\n{stdout[:1000]}")
                     if stderr:
-                        logger.error(f"STDERR:\n{stderr[:1000]}")
+                        logger.error(f"STDERR:\n{stderr[:500]}")
                 except:
                     pass
             
@@ -136,77 +127,68 @@ class LLMProxyManager:
             logger.error(traceback.format_exc())
             return False
     
-    def _check_proxy_health(self, max_retries=2, timeout=5) -> bool:
-        """Check if proxy is healthy with retries and shorter timeout"""
+    def _check_proxy_health(self, max_retries=1, timeout=2) -> bool:
+        """Quick health check with configurable retries"""
         for attempt in range(max_retries):
             try:
                 endpoint = f"http://localhost:{self.port}/health"
-                
-                try:
-                    response = requests.get(endpoint, timeout=timeout)
-                    if response.status_code == 200:
-                        logger.debug(f"✅ Health check passed")
-                        return True
-                except requests.exceptions.Timeout:
-                    logger.debug(f"Health check timeout")
-                except requests.exceptions.ConnectionError:
-                    logger.debug(f"Connection refused")
-                    
-            except Exception as e:
-                logger.debug(f"Health check error: {e}")
+                response = requests.get(endpoint, timeout=timeout)
+                if response.status_code == 200:
+                    return True
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+                pass
+            except Exception:
+                pass
             
             if attempt < max_retries - 1:
-                time.sleep(0.5)  # Reduced from 1 second
+                time.sleep(0.5)
         
         return False
     
     def _initialize_client(self):
-        """Initialize OpenAI client for proxy"""
+        """Initialize OpenAI client with CORRECT timeout placement"""
         try:
+            # CORRECT: timeout is a client parameter, NOT in create() call
             self.client = openai.OpenAI(
                 api_key="dummy-key",
                 base_url=self.base_url,
-                timeout=30.0,  # Reduced from 60
-                max_retries=1  # Reduced from 3
+                timeout=20.0,  # This is correct - client-level timeout
+                max_retries=1
             )
-            self._is_running = True
             logger.info("✅ OpenAI client initialized for LLM proxy")
         except Exception as e:
             logger.error(f"Failed to initialize client: {e}")
-            self._is_running = False
+            self.client = None
+    
+    def _is_proxy_alive(self) -> bool:
+        """Runtime check: Is proxy actually alive RIGHT NOW?"""
+        # Check process is still running
+        if self.proxy_process and self.proxy_process.poll() is not None:
+            logger.warning("Proxy process died")
+            return False
+        
+        # Quick health check
+        return self._check_proxy_health(max_retries=1, timeout=2)
     
     def generate_answer(
         self,
         question: str,
         context: str,
         is_arabic: bool = False,
-        chat_history: List[Dict] = None,  # NEW: Add chat history
+        chat_history: List[Dict] = None,
         max_tokens: int = 500,
         temperature: float = 0.3
     ) -> str:
-        """
-        Generate answer using LLM with context and chat history
-        
-        Args:
-            question: User's question
-            context: Retrieved context from vector DB
-            is_arabic: Whether the question is in Arabic
-            chat_history: Previous conversation messages
-            max_tokens: Maximum tokens in response
-            temperature: Sampling temperature
-            
-        Returns:
-            Generated answer string
-        """
-        if not self._is_running or not self.client:
+        """Generate answer with RUNTIME health check"""
+        # CRITICAL: Check if proxy is ACTUALLY alive before each call
+        if not self.client or not self._is_proxy_alive():
             logger.warning("LLM proxy not available, using fallback")
             return self._fallback_answer(question, context, is_arabic)
         
         try:
-            # Format chat history for prompt
+            # Format chat history
             history_context = ""
             if chat_history and len(chat_history) > 0:
-                # Only include last 4 exchanges (8 messages) to avoid token limits
                 recent_history = chat_history[-8:] if len(chat_history) > 8 else chat_history
                 
                 if is_arabic:
@@ -220,7 +202,7 @@ class LLMProxyManager:
                         role = "User" if msg['role'] == 'user' else "Assistant"
                         history_context += f"{role}: {msg['content']}\n"
             
-            # Create prompt based on language
+            # Create prompt
             if is_arabic:
                 system_prompt = """أنت مساعد ذكي متخصص في تحليل تقارير صندوق الاستثمارات العامة السعودي (PIF).
 مهمتك هي تقديم إجابات دقيقة ومفصلة بناءً على السياق المقدم من التقارير السنوية.
@@ -261,17 +243,17 @@ Current Question: {question}
 
 Provide a comprehensive and accurate answer based on the context and previous conversation. Use clear formatting with organized bullet points when necessary."""
 
-            # Call LLM through proxy with timeout handling
+            # CORRECT: timeout is in client init, NOT here
             try:
                 response = self.client.chat.completions.create(
-                    model="rag-llm",  # Will use llama-3.1-8b-instant (Groq)
+                    model="rag-llm",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=temperature,
-                    max_tokens=max_tokens,
-                    timeout=20.0
+                    max_tokens=max_tokens
+                    # REMOVED: timeout=20.0 (incorrect - not an OpenAI field)
                 )
                 
                 answer = response.choices[0].message.content.strip()
@@ -279,13 +261,13 @@ Provide a comprehensive and accurate answer based on the context and previous co
                 return answer
                 
             except openai.APITimeoutError:
-                logger.error("Groq API timeout")
+                logger.error("API timeout")
                 return self._fallback_answer(question, context, is_arabic)
             except openai.APIConnectionError as e:
-                logger.error(f"Groq connection error: {e}")
+                logger.error(f"Connection error: {e}")
                 return self._fallback_answer(question, context, is_arabic)
             except openai.BadRequestError as e:
-                logger.error(f"Groq bad request: {e}")
+                logger.error(f"Bad request: {e}")
                 return self._fallback_answer(question, context, is_arabic)
                 
         except Exception as e:
@@ -299,7 +281,6 @@ Provide a comprehensive and accurate answer based on the context and previous co
         else:
             intro = "Based on the PIF annual reports:\n\n"
         
-        # Simple context-based answer (existing behavior)
         return intro + context[:800] + "..."
     
     def stop_proxy(self):
@@ -312,8 +293,8 @@ Provide a comprehensive and accurate answer based on the context and previous co
             except:
                 self.proxy_process.kill()
             finally:
-                self._is_running = False
                 self.client = None
+                self._proxy_pid = None
     
     def __enter__(self):
         """Context manager entry"""
@@ -329,19 +310,19 @@ Provide a comprehensive and accurate answer based on the context and previous co
 _proxy_instance: Optional[LLMProxyManager] = None
 
 def get_llm_proxy() -> LLMProxyManager:
-    """Get or create global LLM proxy instance with health check"""
+    """Get or create global LLM proxy instance with FAST health check"""
     global _proxy_instance
     if _proxy_instance is None:
         _proxy_instance = LLMProxyManager()
         
-        # Quick health check (1 retry, 3 second timeout)
+        # FAST check: 1 retry, 2 second timeout
         logger.info("🔍 Checking for LLM proxy...")
         
-        if _proxy_instance._check_proxy_health(max_retries=1, timeout=3):
+        if _proxy_instance._check_proxy_health(max_retries=1, timeout=2):
             _proxy_instance._initialize_client()
             logger.info("✅ Connected to LLM proxy")
         else:
             logger.warning("⚠️  LLM proxy not available - will use context fallback")
-            logger.warning("   Start proxy: python scripts/start_llm_proxy.py")  # Fixed path
+            logger.warning("   Start proxy: python scripts/start_llm_proxy.py")
             
     return _proxy_instance

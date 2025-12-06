@@ -6,11 +6,20 @@ import sys
 import subprocess
 from pathlib import Path
 import shutil
+from dotenv import load_dotenv
 
 if __name__ == "__main__":
-    # Get project root
+    # FIXED: Use absolute path relative to this script
     project_root = Path(__file__).parent.parent
     config_file = project_root / "config" / "llm_proxy_config.yaml"
+    env_file = project_root / "config" / ".env"
+    
+    # CRITICAL: Load environment variables
+    if env_file.exists():
+        load_dotenv(dotenv_path=env_file)
+        print(f"✅ Loaded environment from {env_file.name}")
+    else:
+        print(f"⚠️  Warning: {env_file} not found!")
     
     if not config_file.exists():
         print(f"❌ Config file not found: {config_file}")

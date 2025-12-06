@@ -16,19 +16,19 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # Virtual Environment
 venv/
-env/
 ENV/
-env.bak/
-venv.bak/
+env/
+.venv
+
+# Environment Variables (CRITICAL - contains API keys!)
+.env
+config/.env
 
 # IDE
 .vscode/
@@ -36,45 +36,83 @@ venv.bak/
 *.swp
 *.swo
 *~
+
+# OS
 .DS_Store
+Thumbs.db
 
-# Environment variables
-.env
-.env.local
-
-# Qdrant storage
-qdrant_storage/
-
-# PDF Files (large files)
-*.pdf
-
-# Output directories with extracted content
-output_*/
+# Data (large files)
+data/pdfs/*.pdf
+data/outputs/
+data/qdrant_storage/
 
 # Logs
 *.log
 logs/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Model cache
-.cache/
-models/
-*.bin
-*.safetensors
-
-# OS
-Thumbs.db
-.DS_Store
+# Streamlit
+.streamlit/secrets.toml
 
 # Temporary files
 *.tmp
-*.temp
-temp/
-tmp/
+*.bak
+*.backup
+cleanup_backup_*.txt
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Coverage
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytest
+.pytest_cache/
+
+# Security
+secrets.json
+.secret/
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.jks
+*.ks
+*.sublime-settings
+*.sublime-project
+*.tmPreferences
+*.tmTheme
+*.tmux.conf
+*.zshrc
+*.bashrc
+*.bash_profile
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+*.env.staging.local
+*.env.qa.local
+*.env.beta.local
+*.env.alpha.local
+*.env.legacy.local
+!.env.example
+!.env.sample
+!.env.template
+!.env.dist
+!.env.defaults
+!.env.local.example
+!.env.development.local.example
+!.env.test.local.example
+!.env.production.local.example
+!.env.staging.local.example
+!.env.qa.local.example
+!.env.beta.local.example
+!.env.alpha.local.example
+!.env.legacy.local.example
